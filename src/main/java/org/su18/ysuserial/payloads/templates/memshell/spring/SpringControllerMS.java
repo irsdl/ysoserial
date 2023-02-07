@@ -179,9 +179,7 @@ public class SpringControllerMS {
 		getAttributes.setAccessible(true);
 		Object servletRequestAttributes = getAttributes.invoke(null);
 		Object request                  = getMethodAndInvoke(servletRequestAttributes, "getRequest", new Class[]{}, new Object[]{});
-		System.out.println(request);
 		Object response                 = getMethodAndInvoke(servletRequestAttributes, "getResponse", new Class[]{}, new Object[]{});
-		System.out.println(response);
 		drop(request, response);
 	}
 
