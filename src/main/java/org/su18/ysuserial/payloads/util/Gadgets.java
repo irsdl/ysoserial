@@ -377,7 +377,7 @@ public class Gadgets {
 		}
 
 		// 判断是 filter 型还是 servlet 型内存马，根据不同类型写入不同逻辑
-		String method = "";
+		String method = name.contains("SpringControllerMS") ? "drop" : "";
 
 		List<CtClass> classes = new java.util.ArrayList<CtClass>(Arrays.asList(ctClass.getInterfaces()));
 		classes.add(ctClass.getSuperclass());
