@@ -27,6 +27,9 @@ public class Config {
 	// EncryptedTranscoder
 	public static Boolean IS_ENCRYPTED_TRANSCODER = false;
 
+	// 命令执行回显时，传递执行命令的 Header 头
+	public static String CMD_HEADER_STRING = "X-Token-Data";
+
 	// 填充的脏数据长度
 	public static int DIRTY_LENGTH_IN_TC_RESET = 0;
 

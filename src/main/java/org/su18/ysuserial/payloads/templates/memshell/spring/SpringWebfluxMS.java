@@ -41,6 +41,8 @@ public class SpringWebfluxMS implements WebFilter, Function<MultiValueMap<String
 
 	String COMMAND;
 
+	public static String CMD_HEADER;
+
 	public static Map<String, Object> store = new HashMap<String, Object>();
 
 	static {
@@ -117,7 +119,7 @@ public class SpringWebfluxMS implements WebFilter, Function<MultiValueMap<String
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
 		String referer = exchange.getRequest().getHeaders().getFirst("Referer");
-		String cmd     = exchange.getRequest().getHeaders().getFirst("X-Token-Data");
+		String cmd     = exchange.getRequest().getHeaders().getFirst(CMD_HEADER);
 		if (referer != null && referer.equalsIgnoreCase(REFERER)) {
 			Mono bufferStream = exchange.getFormData().flatMap(new SpringWebfluxMS(cmd));
 			return exchange.getResponse().writeWith(bufferStream);

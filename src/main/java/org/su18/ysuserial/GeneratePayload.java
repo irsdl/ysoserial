@@ -37,6 +37,7 @@ public class GeneratePayload {
 		options.addOption("u", "url", true, "MemoryShell binding url pattern,default [/version.txt]");
 		options.addOption("pw", "password", true, "MemoryShell password,default [p@ssw0rd]");
 		options.addOption("r", "referer", true, "MemoryShell Referer check,default [https://su18.org/]");
+		options.addOption("ch", "cmd-header", true, "Request Header which pass the command to Execute,default [X-Token-Data]");
 		options.addOption("gen", "gen-mem-shell", false, "Write Memory Shell Class to File");
 		options.addOption("n", "gen-mem-shell-name", true, "Memory Shell Class File Name");
 		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools by writing file to $JAVA_HOME,only support SpringControllerMS currently");
@@ -76,6 +77,10 @@ public class GeneratePayload {
 
 		if (cmdLine.hasOption("encrypted-transcoder")) {
 			IS_ENCRYPTED_TRANSCODER = true;
+		}
+
+		if (cmdLine.hasOption("cmd-header")) {
+			CMD_HEADER_STRING = cmdLine.getOptionValue("cmd-header");
 		}
 
 		if (cmdLine.hasOption("url")) {
