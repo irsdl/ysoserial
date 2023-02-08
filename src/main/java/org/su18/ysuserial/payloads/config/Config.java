@@ -59,8 +59,11 @@ public class Config {
 	// 内存马的密码
 	public static String PASSWORD = "0f359740bd1cda99";
 
-	// Referer 校验
-	public static String REFERER = "https://su18.org/";
+	// 用于额外校验的 Http Header 头，默认 Referer
+	public static String HEADER_KEY = "Referer";
+
+	// 用于额外校验的 Http Header 值，默认值 https://su18.org/
+	public static String HEADER_VALUE = "https://su18.org/";
 
 	// 是否生成内存马文件
 	public static Boolean GEN_MEM_SHELL = false;

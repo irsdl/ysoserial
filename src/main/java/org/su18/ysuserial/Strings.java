@@ -1,7 +1,5 @@
 package org.su18.ysuserial;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -48,6 +46,15 @@ public class Strings {
 			lines.add(join(Arrays.asList(row), " ", "", ""));
 		}
 		return lines;
+	}
+
+	public static String converString(String target) {
+		StringBuilder result = new StringBuilder("new String(new byte[]{");
+		byte[]        bytes  = target.getBytes();
+		for (int i = 0; i < bytes.length; i++) {
+			result.append(bytes[i]).append(",");
+		}
+		return result.substring(0, result.length() - 1) + "})";
 	}
 
 	public static class ToStringComparator implements Comparator<Object> {
