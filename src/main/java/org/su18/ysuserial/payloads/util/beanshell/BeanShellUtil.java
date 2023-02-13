@@ -27,7 +27,7 @@ public class BeanShellUtil {
 		}
 
 		// 回显及内存马
-		if (command.startsWith("EX-")) {
+		if (command.startsWith("EX-") || command.startsWith("LF-")) {
 			IS_INHERIT_ABSTRACT_TRANSLET = false;
 			createTemplatesImpl(command);
 
