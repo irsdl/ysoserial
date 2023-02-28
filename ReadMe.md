@@ -194,6 +194,7 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 - `EX-MS-TSMSFromThread-gz`：`哥斯拉` Base64 逻辑内存马
 - `EX-MS-TSMSFromThread-gzraw`：`哥斯拉` RAW 逻辑内存马
 - `EX-MS-TSMSFromThread-cmd`：`CMD` 命令回显内存马
+- `EX-MS-TSMSFromThread-suo5`：`suo5` suo5 隧道马
 
 另外还本项目目前支持了 Tocmat WebSocket、Upgrade 以及 Executor 命令执行内存马，暂未扩展成多种类型（因为相关工具不支持，需魔改），使用方法例子如下：
 
@@ -405,30 +406,27 @@ java -jar ysuserial-<version>-su18-all.jar -g URLDNS -p 'all:xxxxxx.dns.log'
 
    ![image-20220618232717600](images/image-20220618232717600.png)
 
-4. 如果是 <font color="orange"> WebSocket </font> 内存马，可使用 WebSocket 客户端进行链接，路径为 `/version.txt`，可以使用 `-u "/aaa"` 来指定。
+4. 如果是 <font color="orange"> suo5 </font> 内存马，则会直接创建一个 suo5 隧道，可以直接由 suo5 客户端进行连接，由于 suo5 目前对 UA 进行了鉴权，因此生成时需要指定参数 `-hk "User-Agent" -hv "aaaawww"`，如下可正常连接：
+
+   ![image-20230228155643777](/Users/su18/JavaProjects/ysoserial/images//image-20230228155643777.png)
+
+   在配置中进行配置。
+
+   ![image-20230228155632750](/Users/su18/JavaProjects/ysoserial/images//image-20230228155632750.png)
+
+   项目地址：[https://github.com/zema1/suo5](https://github.com/zema1/suo5)，此项目还在积极更新中，会不定期更新相关代码支持相关功能。
+
+5. 如果是 <font color="orange"> WebSocket </font> 内存马，可使用 WebSocket 客户端进行链接，路径为 `/version.txt`，可以使用 `-u "/aaa"` 来指定。
 
    ![iShot_2022-07-25_20.44.35](images/iShot_2022-07-25_20.44.35.png)
 
-5. 如果是 <font color="orange"> Tomcat Executor </font> 内存马，程序会从 Header 中的 `X-Token-Data` 中读取待执行的命令，并将执行结果在 Header `Server-token` 进行 Base64encode 回显，可以使用 `-ch "testecho"` 来指定。
+6. 如果是 <font color="orange"> Tomcat Executor </font> 内存马，程序会从 Header 中的 `X-Token-Data` 中读取待执行的命令，并将执行结果在 Header `Server-token` 进行 Base64encode 回显，可以使用 `-ch "testecho"` 来指定。
 
    ![iShot_2022-08-04_15.52.15.png](images/iShot_2022-08-04_15.52.15.png)
-6. 如果是 <font color="orange"> Tomcat Upgrade </font> 内存马，需要指定 `Connection: Upgrade` 以及 `Upgrade: version.txt`，程序会从 Header 中的 `X-Token-Data` 中读取待执行的命令，并将结果放回 response 中回显，可以使用 `-u "/aaa" -ch "testecho"` 来指定。
+
+7. 如果是 <font color="orange"> Tomcat Upgrade </font> 内存马，需要指定 `Connection: Upgrade` 以及 `Upgrade: version.txt`，程序会从 Header 中的 `X-Token-Data` 中读取待执行的命令，并将结果放回 response 中回显，可以使用 `-u "/aaa" -ch "testecho"` 来指定。
 
    ![iShot_2022-08-23_18.05.42.png](images/iShot_2022-08-23_18.05.42.png)
-
-## NeoReg 隧道类
-
-对于 TLNeoRegFromThread 注入 NeoReg 的隧道脚本。项目地址：https://github.com/L-codes/Neo-reGeorg
-
-可以使用类似如下命令建立隧道连接，Header 可以使用 `-hk "Referer" -hv "https://su18.org/"` 来进行自定义指定。
-
-```shell
-python neoreg.py -k su18 -u http://xxx.com/ -H 'Referer: https://su18.org/'
-```
-
-效果图：
-
-![image-20220619002210167](images/image-20220619002210167.png)
 
 ## Echo 类
 
