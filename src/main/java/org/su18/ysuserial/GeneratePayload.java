@@ -45,7 +45,6 @@ public class GeneratePayload {
 		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools (type 2 only support SpringControllerMS)");
 		options.addOption("ht", "hide-type", true, "Hide memory shell,type 1:write /jre/lib/charsets.jar 2:write /jre/classes/");
 		options.addOption("j", "jboss", false, "Using JBoss ObjectInputStream/ObjectOutputStream");
-		options.addOption("et", "encrypted-transcoder", false, "Encode By EncryptedTranscoder");
 		options.addOption("ncs", "no-com-sun", false, "Force Using org.apache.XXX.TemplatesImpl instead of com.sun.org.apache.XXX.TemplatesImpl");
 		options.addOption("mcl", "mozilla-class-loader", false, "Using org.mozilla.javascript.DefiningClassLoader in TransformerUtil");
 		options.addOption("dcfp", "define-class-from-parameter", true, "Customize parameter name when using DefineClassFromParameter");
@@ -75,10 +74,6 @@ public class GeneratePayload {
 
 		if (cmdLine.hasOption("jboss")) {
 			IS_JBOSS_OBJECT_INPUT_STREAM = true;
-		}
-
-		if (cmdLine.hasOption("encrypted-transcoder")) {
-			IS_ENCRYPTED_TRANSCODER = true;
 		}
 
 		if (cmdLine.hasOption("cmd-header")) {

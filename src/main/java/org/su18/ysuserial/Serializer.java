@@ -1,16 +1,13 @@
 package org.su18.ysuserial;
 
-import org.jasig.spring.webflow.plugin.EncryptedTranscoder;
 import org.jboss.serial.io.JBossObjectOutputStream;
 
 import java.io.*;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.util.Reflections.getFieldValue;
 import static org.su18.ysuserial.payloads.util.Reflections.getMethodAndInvoke;
-import static org.su18.ysuserial.payloads.util.Utils.base64Encode;
 
 public class Serializer implements Callable<byte[]> {
 
@@ -37,12 +34,6 @@ public class Serializer implements Callable<byte[]> {
 			objOut = new JBossObjectOutputStream(out);
 		} else if (IS_DIRTY_IN_TC_RESET) {
 			objOut = new SuObjectOutputStream(out);
-		} else if (IS_ENCRYPTED_TRANSCODER) {
-			String              id      = UUID.randomUUID().toString();
-			EncryptedTranscoder et      = new EncryptedTranscoder();
-			String              payload = base64Encode(et.encode(obj));
-			out.write((id + "_" + payload).getBytes());
-			return;
 		} else {
 			objOut = new ObjectOutputStream(out);
 		}

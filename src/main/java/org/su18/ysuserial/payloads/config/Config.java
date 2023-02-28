@@ -12,20 +12,14 @@ public class Config {
 	// 是否使用混淆技术
 	public static Boolean IS_OBSCURE = false;
 
-
 	// 恶意类是否继承 AbstractTranslet
 	public static Boolean IS_INHERIT_ABSTRACT_TRANSLET = false;
-
 
 	// 是否在序列化数据流中的 TC_RESET 中填充脏数据
 	public static Boolean IS_DIRTY_IN_TC_RESET = false;
 
-
 	// jboss
 	public static Boolean IS_JBOSS_OBJECT_INPUT_STREAM = false;
-
-	// EncryptedTranscoder
-	public static Boolean IS_ENCRYPTED_TRANSCODER = false;
 
 	// 命令执行回显时，传递执行命令的 Header 头
 	public static String CMD_HEADER_STRING = "X-Token-Data";
