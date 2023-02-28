@@ -408,11 +408,11 @@ java -jar ysuserial-<version>-su18-all.jar -g URLDNS -p 'all:xxxxxx.dns.log'
 
 4. 如果是 <font color="orange"> suo5 </font> 内存马，则会直接创建一个 suo5 隧道，可以直接由 suo5 客户端进行连接，由于 suo5 目前对 UA 进行了鉴权，因此生成时需要指定参数 `-hk "User-Agent" -hv "aaaawww"`，如下可正常连接：
 
-   ![image-20230228155643777](/Users/su18/JavaProjects/ysoserial/images//image-20230228155643777.png)
+   ![image-20230228155643777](images/image-20230228155643777.png)
 
    在配置中进行配置。
 
-   ![image-20230228155632750](/Users/su18/JavaProjects/ysoserial/images//image-20230228155632750.png)
+   ![image-20230228155632750](images/image-20230228155632750.png)
 
    项目地址：[https://github.com/zema1/suo5](https://github.com/zema1/suo5)，此项目还在积极更新中，会不定期更新相关代码支持相关功能。
 
