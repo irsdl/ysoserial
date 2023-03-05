@@ -48,15 +48,6 @@ public class Strings {
 		return lines;
 	}
 
-	public static String converString(String target) {
-		StringBuilder result = new StringBuilder("new String(new byte[]{");
-		byte[]        bytes  = target.getBytes();
-		for (int i = 0; i < bytes.length; i++) {
-			result.append(bytes[i]).append(",");
-		}
-		return result.substring(0, result.length() - 1) + "})";
-	}
-
 	public static class ToStringComparator implements Comparator<Object> {
 
 		public int compare(Object o1, Object o2) {
