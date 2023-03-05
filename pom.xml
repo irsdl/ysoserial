@@ -28,7 +28,7 @@
                     <!-- ignore noisy internal api warnings -->
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
-                    <debug>true</debug>
+                    <debug>false</debug>
                     <debuglevel>none</debuglevel>
                     <compilerArguments>
                         <extdirs>lib</extdirs>
