@@ -225,7 +225,10 @@ public class GeneratePayload {
 		}
 
 		System.err.println("\r\n");
-		new HelpFormatter().printHelp("ysoserial-[version]-su18-all.jar", options, true);
+		HelpFormatter helpFormatter = new HelpFormatter();
+		helpFormatter.setWidth(Math.min(200, jline.Terminal.getTerminal().getTerminalWidth()));
+		helpFormatter.printHelp("ysoserial-[version]-su18-all.jar", options, true);
+
 		System.err.println("\r\n");
 		System.err.println("Recommended Usage: -g [payload] -p '[command]' -dt 1 -dl 50000 -o -i");
 		System.err.println("If you want your payload being extremely short，you could just use:");
