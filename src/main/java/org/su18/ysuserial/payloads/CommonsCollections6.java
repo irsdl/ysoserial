@@ -7,7 +7,7 @@ import org.apache.commons.collections.map.LazyMap;
 import org.su18.ysuserial.payloads.annotation.Authors;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
 import org.su18.ysuserial.payloads.util.Reflections;
-import org.su18.ysuserial.payloads.util.cc.TransformerUtil;
+import org.su18.ysuserial.payloads.util.TransformerUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;

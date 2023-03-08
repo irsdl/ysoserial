@@ -71,6 +71,9 @@ public class Config {
 	// 内存马文件名
 	public static String GEN_MEM_SHELL_FILENAME = "";
 
+	// ScriptEngineManager 是否为 RHINO 引擎
+	public static boolean USING_RHINO = false;
+
 	// 不同类型内存马的父类/接口与其关键参数的映射
 	public static HashMap<String, String> KEY_METHOD_MAP = new HashMap<String, String>();
 

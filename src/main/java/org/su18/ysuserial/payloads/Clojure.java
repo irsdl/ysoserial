@@ -8,7 +8,7 @@ import clojure.lang.PersistentArrayMap;
 import clojure.main$eval_opt;
 import org.su18.ysuserial.payloads.annotation.Authors;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
-import org.su18.ysuserial.payloads.util.clojure.ClojureUtil;
+import org.su18.ysuserial.payloads.util.ClojureUtil;
 
 import java.util.HashMap;
 import java.util.Map;

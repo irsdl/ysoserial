@@ -1,6 +1,5 @@
 package org.su18.ysuserial.payloads;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import javax.management.BadAttributeValueExpException;
@@ -13,7 +12,7 @@ import org.apache.commons.collections.map.DefaultedMap;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
 import org.su18.ysuserial.payloads.util.JavaVersion;
 import org.su18.ysuserial.payloads.util.Reflections;
-import org.su18.ysuserial.payloads.util.cc.TransformerUtil;
+import org.su18.ysuserial.payloads.util.TransformerUtil;
 
 @Dependencies({"commons-collections:commons-collections:3.2.1"})
 public class CommonsCollections9 implements ObjectPayload<BadAttributeValueExpException> {

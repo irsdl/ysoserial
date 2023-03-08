@@ -6,7 +6,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
 import org.su18.ysuserial.payloads.util.Reflections;
-import org.su18.ysuserial.payloads.util.beanshell.BeanShellUtil;
+import org.su18.ysuserial.payloads.util.BeanShellUtil;
 
 import java.lang.reflect.*;
 import java.util.Comparator;

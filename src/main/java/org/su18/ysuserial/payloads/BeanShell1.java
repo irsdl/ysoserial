@@ -11,7 +11,7 @@ import java.util.PriorityQueue;
 import org.su18.ysuserial.payloads.annotation.Authors;
 import org.su18.ysuserial.payloads.util.Reflections;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
-import org.su18.ysuserial.payloads.util.beanshell.BeanShellUtil;
+import org.su18.ysuserial.payloads.util.BeanShellUtil;
 
 /**
  * Credits: Alvaro Munoz (@pwntester) and Christian Schneider (@cschneider4711)
