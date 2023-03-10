@@ -204,12 +204,6 @@ public class Gadgets {
 			String className = myClass.getName();
 			ctClass = pool.get(className);
 
-			// 从 Request 中获取的内存马逻辑需要 Header 判断
-			if (className.contains("TLNeoRegFromThread")) {
-				insertField(ctClass, "HEADER_KEY", "public static String HEADER_KEY=\"" + HEADER_KEY + "\";");
-				insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=\"" + HEADER_VALUE + "\";");
-			}
-
 			// 为 DefineClassFromParameter 添加自定义函数功能
 			if (className.endsWith("DefineClassFromParameter")) {
 				insertField(ctClass, "parameter", "public static String parameter = \"" + PARAMETER + "\";");
