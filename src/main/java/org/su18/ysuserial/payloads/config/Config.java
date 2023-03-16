@@ -1,6 +1,8 @@
 package org.su18.ysuserial.payloads.config;
 
 
+import javassist.ClassPool;
+
 import java.util.HashMap;
 
 /**
@@ -17,9 +19,6 @@ public class Config {
 
 	// 是否在序列化数据流中的 TC_RESET 中填充脏数据
 	public static Boolean IS_DIRTY_IN_TC_RESET = false;
-
-	// jboss
-	public static Boolean IS_JBOSS_OBJECT_INPUT_STREAM = false;
 
 	// 命令执行回显时，传递执行命令的 Header 头
 	public static String CMD_HEADER_STRING = "X-Token-Data";
@@ -73,6 +72,8 @@ public class Config {
 
 	// ScriptEngineManager 是否为 RHINO 引擎
 	public static boolean USING_RHINO = false;
+
+	public static ClassPool POOL = ClassPool.getDefault();
 
 	// 不同类型内存马的父类/接口与其关键参数的映射
 	public static HashMap<String, String> KEY_METHOD_MAP = new HashMap<String, String>();

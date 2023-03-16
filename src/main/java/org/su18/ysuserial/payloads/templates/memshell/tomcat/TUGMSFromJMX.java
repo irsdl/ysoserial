@@ -23,9 +23,6 @@ public class TUGMSFromJMX implements UpgradeProtocol {
 
 	public static String pattern;
 
-	public TUGMSFromJMX() {
-	}
-
 	static {
 		try {
 			MBeanServer mbeanServer = Registry.getRegistry(null, null).getMBeanServer();

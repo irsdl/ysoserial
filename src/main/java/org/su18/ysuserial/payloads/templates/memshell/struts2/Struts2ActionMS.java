@@ -42,10 +42,10 @@ public class Struts2ActionMS {
 
 				java.lang.reflect.Constructor<?> constructor = Class.forName("com.opensymphony.xwork2.config.entities.ActionConfig", false, loader).getDeclaredConstructor(new Class[]{String.class, String.class, String.class});
 				constructor.setAccessible(true);
-				Object                  actionConfig = constructor.newInstance("", pattern, selfName);
+				Object actionConfig = constructor.newInstance("", pattern, selfName);
 
 				// 这里常见的 context 是 "" 或者 "/"，在额外配置的时候可能需要额外处理
-				java.util.LinkedHashMap o1           = (java.util.LinkedHashMap) m.get("");
+				java.util.LinkedHashMap o1 = (java.util.LinkedHashMap) m.get("");
 
 				if (o1 == null) {
 					o1 = (java.util.LinkedHashMap) m.get("/");

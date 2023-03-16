@@ -1,7 +1,5 @@
 package org.su18.ysuserial;
 
-import org.jboss.serial.io.JBossObjectOutputStream;
-
 import java.io.*;
 import java.util.concurrent.Callable;
 
@@ -30,9 +28,7 @@ public class Serializer implements Callable<byte[]> {
 	public static void serialize(Object obj, final OutputStream out) throws Exception {
 		final ObjectOutputStream objOut;
 
-		if (IS_JBOSS_OBJECT_INPUT_STREAM) {
-			objOut = new JBossObjectOutputStream(out);
-		} else if (IS_DIRTY_IN_TC_RESET) {
+		if (IS_DIRTY_IN_TC_RESET) {
 			objOut = new SuObjectOutputStream(out);
 		} else {
 			objOut = new ObjectOutputStream(out);

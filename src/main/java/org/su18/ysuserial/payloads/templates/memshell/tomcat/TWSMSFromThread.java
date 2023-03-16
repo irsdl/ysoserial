@@ -18,9 +18,6 @@ public class TWSMSFromThread extends Endpoint implements MessageHandler.Whole<St
 
 	public static String pattern;
 
-	public TWSMSFromThread() {
-	}
-
 	static {
 		try {
 			WebappClassLoaderBase webappClassLoaderBase = (WebappClassLoaderBase) Thread.currentThread().getContextClassLoader();

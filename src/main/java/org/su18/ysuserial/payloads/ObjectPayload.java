@@ -44,7 +44,7 @@ public interface ObjectPayload<T> {
 			if (clazz == null) {
 				try {
 					return clazz = (Class<? extends ObjectPayload>) Class
-							.forName(GeneratePayload.class.getPackage().getName() + ".payloads." + className);
+							.forName(GeneratePayload.class.getPackage().getName() + ".payloads.gadgets." + className);
 				} catch (Exception ignored) {
 				}
 			}
