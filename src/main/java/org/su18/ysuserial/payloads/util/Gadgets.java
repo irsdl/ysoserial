@@ -119,7 +119,7 @@ public class Gadgets {
 
 			// 如果 payload 自身有父类，则使用 ClassLoaderTemplate 加载
 			if (!"java.lang.Object".equals(ctClass.getSuperclass().getName())) {
-				ctClass = encapsulationByClassLoaderTemplate(ctClass.toBytecode(), newClassName);
+				ctClass = encapsulationByClassLoaderTemplate(ctClass.toBytecode());
 			} else {
 				// 否则直接设置父类
 				ctClass.defrost();

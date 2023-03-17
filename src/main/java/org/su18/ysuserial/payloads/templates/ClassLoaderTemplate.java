@@ -14,10 +14,10 @@ public class ClassLoaderTemplate {
 
 	static String b64;
 
-	static String className;
-
 	static {
 		try {
+			// 初始化
+			initClassBytes();
 			GZIPInputStream       gzipInputStream       = new GZIPInputStream(new ByteArrayInputStream(base64Decode(b64)));
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 			byte[]                bs                    = new byte[4096];
@@ -65,16 +65,20 @@ public class ClassLoaderTemplate {
 		byte[] value = null;
 		try {
 			base64 = Class.forName("java.util.Base64");
-			Object decoder = base64.getMethod("getDecoder", null).invoke(base64, null);
+			Object decoder = base64.getMethod("getDecoder", new Class[]{}).invoke(null, (Object[]) null);
 			value = (byte[]) decoder.getClass().getMethod("decode", new Class[]{String.class}).invoke(decoder, new Object[]{bs});
-		} catch (Exception ignored) {
+		} catch (Exception e) {
 			try {
 				base64 = Class.forName("sun.misc.BASE64Decoder");
 				Object decoder = base64.newInstance();
 				value = (byte[]) decoder.getClass().getMethod("decodeBuffer", new Class[]{String.class}).invoke(decoder, new Object[]{bs});
-			} catch (Exception whatever) {
+			} catch (Exception ignored) {
 			}
 		}
+
 		return value;
+	}
+
+	public static void initClassBytes() {
 	}
 }

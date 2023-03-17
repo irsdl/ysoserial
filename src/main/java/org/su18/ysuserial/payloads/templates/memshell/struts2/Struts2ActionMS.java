@@ -101,7 +101,7 @@ public class Struts2ActionMS {
 		byte[] value = null;
 		try {
 			base64 = Class.forName("java.util.Base64");
-			Object decoder = base64.getMethod("getDecoder", null).invoke(base64, null);
+			Object decoder = base64.getMethod("getDecoder", new Class[]{}).invoke(null, (Object[]) null);
 			value = (byte[]) decoder.getClass().getMethod("decode", new Class[]{String.class}).invoke(decoder, new Object[]{bs});
 		} catch (Exception e) {
 			try {

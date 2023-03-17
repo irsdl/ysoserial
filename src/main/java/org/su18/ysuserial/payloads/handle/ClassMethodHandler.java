@@ -3,6 +3,7 @@ package org.su18.ysuserial.payloads.handle;
 import javassist.*;
 import org.apache.commons.lang.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -297,4 +298,7 @@ public class ClassMethodHandler {
 		return method;
 	}
 
+	public static void insertInitHookClassINFORMATION(CtClass ctClass, ArrayList<String> list) throws Exception {
+		insertMethod(ctClass, "initHookClassINFORMATION", "{HOOK_CLASS_INFORMATION_MAP.add(\"" + list.get(0) + "\");HOOK_CLASS_INFORMATION_MAP.add(\"" + list.get(1) + "\");HOOK_CLASS_INFORMATION_MAP.add(\"" + list.get(2) + "\");}");
+	}
 }
