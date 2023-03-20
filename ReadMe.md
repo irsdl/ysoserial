@@ -200,6 +200,10 @@ java -jar ysoserial-[version]-su18-all.jar -g [payload] -p '[command]'
 
 - `EX-MS-RMIBindTemplate-1100-su18`: `CMD` 命令回显 RMI 内存马
 
+无文件落地的 Agent 型内存马，通过修改系统关键类字节码，植入内存马，无任何文件落地，全程在内存操作，能绕过多种防护和检测，使用方式 `EX-Agent-Lin/Win-Filter/Servlet-bx/gzraw/gz/cmd`，目前区分 Win/Lin 操作系统，并支持了 Servlet、Tomcat Filter 型内存马，将会持续更新一些 Hook 点，使用方式例如：
+
+- `EX-Agent-Lin-Filter-bx`：在 Linux 系统上对 Tomcat Filter 修改类字节码的冰蝎 Agent 型内存马
+
 本工具支持的全部内存马经过测试可用，但实际受到中间件版本的限制，对于内存马的相关测试，可以参考项目 [https://github.com/su18/MemoryShell](https://github.com/su18/MemoryShell)
 
 这里就不一一测试截图了，欢迎大家进行测试，如果问题请按文档最后的联系方式联系我。
@@ -500,7 +504,6 @@ java -cp ysuserial-<version>-su18-all.jar org.su18.ysuserial.exploit.JRMPListene
 在可预见的未来内会更新如下功能，敬请期待：
 
 - 加载 CS shellcode（还没学会）；
-- 无文件落地 Agent 注入（还没学会）；
 - 持续绕过各种防护（我是实验室黑客，实战还没学会）。
 
 或者你有什么其他的想法或需求，可以与我进行联系。

@@ -4,7 +4,7 @@
 
     <groupId>ysuserial</groupId>
     <artifactId>ysuserial</artifactId>
-    <version>1.4-su18</version>
+    <version>1.5-su18</version>
     <packaging>jar</packaging>
 
     <name>ysuserial</name>
