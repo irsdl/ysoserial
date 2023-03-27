@@ -1,4 +1,4 @@
-package org.su18.ysuserial.payloads.templates;
+package org.su18.ysuserial.payloads.templates.classloader;
 
 import java.io.*;
 
@@ -75,7 +75,6 @@ public class HideMemShellTemplate extends ClassLoader {
 
 	@Override
 	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-		System.out.println(Thread.currentThread().getContextClassLoader());
 		return Class.forName(name, true, Thread.currentThread().getContextClassLoader());
 	}
 }

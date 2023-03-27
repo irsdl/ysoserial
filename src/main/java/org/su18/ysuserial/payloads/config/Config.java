@@ -29,7 +29,7 @@ public class Config {
 	// 是否使用落地文件的方式隐藏内存马
 	public static Boolean HIDE_MEMORY_SHELL = false;
 
-	// 落地文件姿势，1 charsets.jar 2 classes
+	// 落地文件姿势，1 charsets.jar 2 classes 3 HideClassLoaderTemplate
 	public static int HIDE_MEMORY_SHELL_TYPE = 0;
 
 	// 是否强制使用 org.apache.XXX.TemplatesImpl

